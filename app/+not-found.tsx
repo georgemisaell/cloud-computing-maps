@@ -6,7 +6,7 @@ export default function Index() {
     <>
       <Stack.Screen options={{ title: "Oops! Not Found" }}></Stack.Screen>
       <View style={styles.container}>
-        <Link href="/index" style={styles.button}>
+        <Link href="/" style={styles.button}>
           Go back to Home Screen
         </Link>
       </View>
