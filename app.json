@@ -1,5 +1,6 @@
 {
   "expo": {
+    "scheme": "cc-maps",
     "name": "cc-maps",
     "slug": "cc-maps",
     "version": "1.0.0",
@@ -20,10 +21,15 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.ccmaps"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite"
+    ]
   }
 }
