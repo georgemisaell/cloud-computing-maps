@@ -1,78 +1,174 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+const BLUE = "#0EA5E9";
+ 
 const dummyFavorites = [
-  { id: "1", name: "Padel Surabaya Barat", type: "Padel", distance: "0.8 km", status: "Buka", price: "Rp 60K–80K/jam", rating: 5 },
-  { id: "2", name: "GOR Arcadia", type: "Badminton", distance: "1.2 km", status: "Buka", price: "Rp 25K–40K/jam", rating: 4 },
-  { id: "3", name: "Basket Kenjeran", type: "Basket", distance: "2.5 km", status: "Tutup", price: "Gratis", rating: 4 },
+  { id: "1", name: "Padel Surabaya Barat", type: "Padel", distance: "0.8 km", status: "Buka", price: "Rp 60K–80K/jam", rating: 5, bgColor: "#E8F4F8" },
+  { id: "2", name: "GOR Arcadia", type: "Badminton", distance: "1.2 km", status: "Buka", price: "Rp 25K–40K/jam", rating: 4, bgColor: "#1A1A2E" },
+  { id: "3", name: "Basket Kenjeran", type: "Basket", distance: "2.5 km", status: "Tutup", price: "Gratis", rating: 4, bgColor: "#2C3E50" },
 ];
-
+ 
 export default function FavoriteScreen() {
   const [favorites, setFavorites] = useState(dummyFavorites);
+  const [selectedCategory, setSelectedCategory] = useState("Semua");
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [activeFilter, setActiveFilter] = useState<"kategori" | "rating" | null>(null);
+ 
+  const categories = ["Semua", "Padel", "Badminton", "Basket"];
+ 
   const handleDelete = (id: string) => {
     setFavorites((prev) => prev.filter((item) => item.id !== id));
   };
-  const [selectedCategory, setSelectedCategory] = useState("Semua");
-  const [selectedRating, setSelectedRating] = useState(0);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [showRatingModal, setShowRatingModal] = useState(false);
-
-  const categories = ["Semua", "Padel", "Badminton", "Basket"];
-
+ 
   const filteredFavorites = favorites.filter((item) => {
     const categoryMatch = selectedCategory === "Semua" || item.type === selectedCategory;
-    const ratingMatch = selectedRating === 0 || item.rating >= selectedRating;
+    const ratingMatch = selectedRating === null || item.rating >= selectedRating;
     return categoryMatch && ratingMatch;
   });
+ 
   const renderStars = (rating: number) =>
     Array.from({ length: 5 }, (_, i) => (
-      <Ionicons key={i} name={i < rating ? "star" : "star-outline"} size={14} color={i < rating ? "#F59E0B" : "#D1D5DB"} />
+      <Ionicons key={i} name={i < rating ? "star" : "star-outline"} size={12} color={i < rating ? "#F59E0B" : "#D1D5DB"} />
     ));
- return (
+ 
+  return (
     <View style={styles.container}>
       <Text style={styles.title}>Tempat favorit</Text>
-
+ 
+      {/* Filter chips */}
       <View style={styles.filterRow}>
-        <TouchableOpacity style={styles.filterActive} onPress={() => setShowCategoryModal(true)}>
-          <Text style={styles.filterActiveText}>{selectedCategory} ▾</Text>
-        </TouchableOpacity>
+        {/* Chip Kategori */}
         <TouchableOpacity
-          style={selectedRating > 0 ? styles.filterActive : styles.filterInactive}
-          onPress={() => setShowRatingModal(true)}
+          style={[styles.filterChip, (activeFilter === "kategori" || selectedCategory !== "Semua") && styles.filterChipActive]}
+          onPress={() => setActiveFilter(activeFilter === "kategori" ? null : "kategori")}
         >
-          <Text style={selectedRating > 0 ? styles.filterActiveText : styles.filterInactiveText}>
-            {selectedRating > 0 ? `${selectedRating}★ ke atas` : "Rating ▾"}
+          <Text style={[styles.filterChipText, (activeFilter === "kategori" || selectedCategory !== "Semua") && styles.filterChipTextActive]}>
+            {selectedCategory} {activeFilter === "kategori" ? "▲" : "▼"}
+          </Text>
+        </TouchableOpacity>
+ 
+        {/* Chip Rating */}
+        <TouchableOpacity
+          style={[styles.filterChip, (activeFilter === "rating" || selectedRating !== null) && styles.filterChipActive]}
+          onPress={() => setActiveFilter(activeFilter === "rating" ? null : "rating")}
+        >
+          <Text style={[styles.filterChipText, (activeFilter === "rating" || selectedRating !== null) && styles.filterChipTextActive]}>
+            Rating {activeFilter === "rating" ? "▲" : "▼"}
           </Text>
         </TouchableOpacity>
       </View>
-
-      {favorites.length > 0 && (
-        <View style={styles.countRow}>
-          <Ionicons name="heart" size={16} color="#3B82F6" />
-          <Text style={styles.countText}>{favorites.length} tempat tersimpan</Text>
+ 
+      {/* Dropdown Kategori */}
+      {activeFilter === "kategori" && (
+        <View style={styles.dropdown}>
+          <Text style={styles.dropdownTitle}>Pilih Kategori</Text>
+          {categories.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.dropdownItem, selectedCategory === cat && styles.dropdownItemActive]}
+              onPress={() => { setSelectedCategory(cat); setActiveFilter(null); }}
+            >
+              <Text style={[styles.dropdownItemText, selectedCategory === cat && styles.dropdownItemTextActive]}>
+                {cat}
+              </Text>
+              {selectedCategory === cat && (
+                <View style={styles.checkCircle}>
+                  <Ionicons name="checkmark" size={14} color="#fff" />
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
         </View>
       )}
-
+ 
+      {/* Dropdown Rating */}
+      {activeFilter === "rating" && (
+        <View style={styles.dropdown}>
+          <Text style={styles.dropdownTitle}>Filter Rating</Text>
+          <TouchableOpacity
+            style={[styles.dropdownItem, selectedRating === null && styles.dropdownItemActive]}
+            onPress={() => { setSelectedRating(null); setActiveFilter(null); }}
+          >
+            <Text style={[styles.dropdownItemText, selectedRating === null && styles.dropdownItemTextActive]}>
+              Semua rating
+            </Text>
+            {selectedRating === null && (
+              <View style={styles.checkCircle}><Ionicons name="checkmark" size={14} color="#fff" /></View>
+            )}
+          </TouchableOpacity>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <TouchableOpacity
+              key={n}
+              style={[styles.dropdownItem, selectedRating === n && styles.dropdownItemActive]}
+              onPress={() => { setSelectedRating(n); setActiveFilter(null); }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Ionicons key={i} name={i < n ? "star" : "star-outline"} size={16} color={i < n ? "#F59E0B" : "#D1D5DB"} />
+                ))}
+                <Text style={[styles.dropdownItemText, { marginLeft: 4 }, selectedRating === n && styles.dropdownItemTextActive]}>
+                  {n === 5 ? "saja" : "ke atas"}
+                </Text>
+              </View>
+              {selectedRating === n && (
+                <View style={styles.checkCircle}><Ionicons name="checkmark" size={14} color="#fff" /></View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+ 
+      {/* Success banner */}
+      {(selectedCategory !== "Semua" || selectedRating !== null) && (
+        <View style={styles.successBanner}>
+          <Ionicons name="checkmark" size={14} color={BLUE} />
+          <Text style={styles.successBannerText}>
+            {selectedCategory !== "Semua" && selectedRating !== null
+              ? `Kategori: ${selectedCategory} • Rating ${selectedRating}★ ke atas`
+              : selectedCategory !== "Semua"
+              ? `Filter: kategori ${selectedCategory}`
+              : `Filter: rating ${selectedRating}★ ke atas`}
+          </Text>
+        </View>
+      )}
+ 
+      {/* Count */}
+      {filteredFavorites.length > 0 && (
+        <View style={styles.countRow}>
+          <Ionicons name="heart" size={16} color={BLUE} />
+          <Text style={styles.countText}>{filteredFavorites.length} tempat tersimpan</Text>
+        </View>
+      )}
+ 
       <FlatList
         data={filteredFavorites}
         keyExtractor={(item) => item.id}
+        onScrollBeginDrag={() => setActiveFilter(null)}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card}>
-            <View style={styles.cardImage}>
-              <Ionicons name="image-outline" size={32} color="#9CA3AF" />
+            {/* Thumbnail — persis struktur Home: width 110, height 100, badge putih pojok bawah */}
+            <View style={[styles.cardThumb, { backgroundColor: item.bgColor }]}>
+              <Text style={styles.categoryBadge}>{item.type}</Text>
             </View>
-            <View style={styles.cardContent}>
+            {/* Info  */}
+            <View style={styles.cardInfo}>
               <Text style={styles.cardName}>{item.name}</Text>
-              <Text style={styles.cardSub}>{item.type} • {item.distance}</Text>
-              <View style={styles.cardRow}>
-                <View style={styles.stars}>{renderStars(item.rating)}</View>
-                <View style={[styles.badge, { backgroundColor: item.status === "Buka" ? "#D1FAE5" : "#FEE2E2" }]}>
-                  <Text style={[styles.badgeText, { color: item.status === "Buka" ? "#065F46" : "#991B1B" }]}>{item.status}</Text>
-                </View>
+              <Text style={styles.cardDistance}>📍 {item.distance}</Text>
+              <View style={styles.starsRow}>
+                {renderStars(item.rating)}
               </View>
-              <Text style={styles.cardPrice}>{item.price}</Text>
+              <View style={styles.cardRow}>
+                <View style={[styles.statusBadge, { backgroundColor: item.status === "Buka" ? "#D1FAE5" : "#FEE2E2" }]}>
+                  <Text style={[styles.statusText, { color: item.status === "Buka" ? "#065F46" : "#991B1B" }]}>
+                    {item.status}
+                  </Text>
+                </View>
+                <Text style={styles.cardPrice}>{item.price}</Text>
+              </View>
             </View>
+            {/* Tombol hapus */}
             <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteBtn}>
               <Ionicons name="trash-outline" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -84,104 +180,69 @@ export default function FavoriteScreen() {
             <Text style={styles.emptyTitle}>Belum ada favorit</Text>
             <Text style={styles.emptySubtitle}>Tap ikon hati di halaman detail untuk menyimpan tempat</Text>
             <TouchableOpacity style={styles.exploreButton}>
-              <Ionicons name="add" size={18} color="#3B82F6" />
+              <Ionicons name="add" size={18} color={BLUE} />
               <Text style={styles.exploreButtonText}>Jelajahi tempat</Text>
             </TouchableOpacity>
           </View>
         }
-        ListFooterComponent={favorites.length > 0 ? <Text style={styles.hint}>Tap card untuk lihat detail tempat</Text> : null}
-        contentContainerStyle={favorites.length === 0 ? styles.emptyFlex : styles.listContent}
+        ListFooterComponent={filteredFavorites.length > 0 ? <Text style={styles.hint}>Tap card untuk lihat detail tempat</Text> : null}
+        contentContainerStyle={filteredFavorites.length === 0 ? styles.emptyFlex : styles.listContent}
       />
-      --Modal Kategori--
-      <Modal visible={showCategoryModal} transparent animationType="fade">
-        <Pressable style={styles.overlay} onPress={() => setShowCategoryModal(false)}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Pilih Kategori</Text>
-            {categories.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                style={styles.modalItem}
-                onPress={() => { setSelectedCategory(cat); setShowCategoryModal(false); }}
-              >
-                <Text style={[styles.modalItemText, selectedCategory === cat && { color: "#3B82F6", fontWeight: "700" }]}>
-                  {cat}
-                </Text>
-                {selectedCategory === cat && <Ionicons name="checkmark" size={18} color="#3B82F6" />}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
-
-      --Modal Rating--
-      <Modal visible={showRatingModal} transparent animationType="fade">
-      <Pressable style={styles.overlay} onPress={() => setShowRatingModal(false)}>
-        <View style={styles.modal}>
-          <Text style={styles.modalTitle}>Minimum Rating</Text>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <TouchableOpacity
-              key={star}
-              style={styles.modalItem}
-              onPress={() => { setSelectedRating(star); setShowRatingModal(false); }}
-            >
-              <View style={styles.modalStarRow}>
-                {Array.from({ length: 5 }, (_, i) => (
-                  <Ionicons key={i} name={i < star ? "star" : "star-outline"} size={18} color={i < star ? "#F59E0B" : "#D1D5DB"} />
-                ))}
-                <Text style={styles.modalItemText}> ke atas</Text>
-              </View>
-              {selectedRating === star && <Ionicons name="checkmark" size={18} color="#3B82F6" />}
-            </TouchableOpacity>
-          ))}
-        </View>
-      </Pressable>
-    </Modal>
     </View>
   );
 }
-
+ 
+const BLUE_CONST = "#0EA5E9";
+ 
 const styles = StyleSheet.create({
-  // UBAH container (hapus justifyContent & alignItems, ganti backgroundColor)
-  container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-    paddingTop: 56,
-    paddingHorizontal: 16,
-  },
-  // HAPUS style text yang lama
-
-  // TAMBAH semua style baru di bawah ini
+  container: { flex: 1, backgroundColor: "#F9FAFB", paddingTop: 56, paddingHorizontal: 16 },
   title: { fontSize: 24, fontWeight: "bold", color: "#111827", marginBottom: 16 },
-  filterRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-  filterActive: { backgroundColor: "#3B82F6", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
-  filterActiveText: { color: "#fff", fontWeight: "600", fontSize: 14 },
-  filterInactive: { backgroundColor: "#fff", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: "#E5E7EB" },
-  filterInactiveText: { color: "#374151", fontSize: 14 },
+ 
+  // Filter chips 
+  filterRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
+  filterChip: { borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },
+  filterChipText: { fontSize: 14, color: "#374151" },
+  filterChipActive: { backgroundColor: BLUE_CONST, borderColor: BLUE_CONST },
+  filterChipTextActive: { color: "#fff", fontWeight: "600" },
+ 
+  // Dropdown
+  dropdown: { backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 12, elevation: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12 },
+  dropdownTitle: { fontSize: 12, color: "#9CA3AF", fontWeight: "600", marginBottom: 10, letterSpacing: 0.5 },
+  dropdownItem: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 12, paddingHorizontal: 10, borderRadius: 10, marginBottom: 2 },
+  dropdownItemActive: { backgroundColor: "#EFF6FF" },
+  dropdownItemText: { fontSize: 15, color: "#374151" },
+  dropdownItemTextActive: { color: BLUE_CONST, fontWeight: "600" },
+  checkCircle: { width: 22, height: 22, borderRadius: 11, backgroundColor: BLUE_CONST, justifyContent: "center", alignItems: "center" },
+ 
+  // Success banner 
+  successBanner: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#EFF6FF", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 12 },
+  successBannerText: { fontSize: 13, color: BLUE_CONST, fontWeight: "600" },
+ 
+  // Count
   countRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
   countText: { color: "#374151", fontSize: 14 },
+ 
+  // List
   listContent: { paddingBottom: 24 },
   emptyFlex: { flexGrow: 1, justifyContent: "center", alignItems: "center" },
   emptyContainer: { alignItems: "center", gap: 12 },
   emptyTitle: { fontSize: 18, fontWeight: "bold", color: "#111827" },
   emptySubtitle: { fontSize: 14, color: "#6B7280", textAlign: "center", paddingHorizontal: 24 },
-  exploreButton: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1.5, borderColor: "#3B82F6", borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
-  exploreButtonText: { color: "#3B82F6", fontWeight: "600", fontSize: 15 },
-  card: { flexDirection: "row", backgroundColor: "#fff", borderRadius: 12, padding: 12, marginBottom: 12, alignItems: "center", elevation: 2 },
-  cardImage: { width: 72, height: 72, backgroundColor: "#F3F4F6", borderRadius: 8, justifyContent: "center", alignItems: "center", marginRight: 12 },
-  cardContent: { flex: 1, gap: 3 },
+  exploreButton: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1.5, borderColor: BLUE_CONST, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
+  exploreButtonText: { color: BLUE_CONST, fontWeight: "600", fontSize: 15 },
+ 
+  // Card 
+  card: { flexDirection: "row", backgroundColor: "#fff", borderRadius: 12, padding: 12, overflow: "hidden", marginBottom: 12, elevation: 3 },
+  cardThumb: { width: 110, height: 100, justifyContent: "flex-end", padding: 8 },
+  categoryBadge: { backgroundColor: "rgba(255,255,255,0.9)", fontSize: 10, fontWeight: "700", color: "#333", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, alignSelf: "flex-start" },
+  cardInfo: { flex: 1, padding: 12, justifyContent: "space-between" },
   cardName: { fontSize: 15, fontWeight: "bold", color: "#111827" },
-  cardSub: { fontSize: 13, color: "#6B7280" },
+  cardDistance: { fontSize: 13, color: "#6B7280", marginVertical: 4 },
+  starsRow: { flexDirection: "row", gap: 2, marginBottom: 4 },
   cardRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  stars: { flexDirection: "row", gap: 2 },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  badgeText: { fontSize: 12, fontWeight: "600" },
-  cardPrice: { fontSize: 13, color: "#374151" },
-  deleteBtn: { padding: 8 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  statusText: { fontSize: 12, fontWeight: "600" },
+  cardPrice: { fontSize: 13, fontWeight: "700", color: BLUE_CONST },
+  deleteBtn: { padding: 8, alignSelf: "center" },
   hint: { textAlign: "center", color: "#9CA3AF", fontSize: 13, marginTop: 8 },
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", alignItems: "center" },
-  modal: { backgroundColor: "#fff", borderRadius: 16, paddingVertical: 16, paddingHorizontal: 8, width: 280, elevation: 8 },
-  modalTitle: { fontSize: 16, fontWeight: "bold", color: "#111827", textAlign: "center", marginBottom: 8, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
-  modalItem: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderRadius: 8 },
-  modalItemText: { fontSize: 14, color: "#374151" },
-  modalStarRow: { flexDirection: "row", alignItems: "center", gap: 2 },
 });
