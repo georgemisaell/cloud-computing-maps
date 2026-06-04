@@ -8,7 +8,6 @@ export default function ProfileScreen() {
     <View style={styles.safe}>
         <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
         <ScrollView contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.title}>Profile</Text>
             {/* Profile Card */}
             <View style={styles.profileCard}>
             <View style={styles.avatar}>
@@ -60,12 +59,12 @@ export default function ProfileScreen() {
                 <Text style={styles.menuLabel}>Tempat terakhir dilihat</Text>
                 <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
             </TouchableOpacity>
-            </View>
-            {/* Logout */}
-            <TouchableOpacity style={styles.logoutBtn}>
-            <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-            <Text style={styles.logoutText}>Logout</Text>
+            <View style={styles.menuDivider} />
+            <TouchableOpacity style={styles.menuItem}>
+                <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+                <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
+            </View>
         </ScrollView>
         </View>
   );
