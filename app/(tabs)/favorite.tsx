@@ -1,65 +1,92 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const BLUE = "#0EA5E9";
- 
+
 const dummyFavorites = [
-  { id: "1", name: "Padel Surabaya Barat", type: "Padel", distance: "0.8 km", status: "Buka", price: "Rp 60K–80K/jam", rating: 5, bgColor: "#E8F4F8" },
-  { id: "2", name: "GOR Arcadia", type: "Badminton", distance: "1.2 km", status: "Buka", price: "Rp 25K–40K/jam", rating: 4, bgColor: "#1A1A2E" },
-  { id: "3", name: "Basket Kenjeran", type: "Basket", distance: "2.5 km", status: "Tutup", price: "Gratis", rating: 4, bgColor: "#2C3E50" },
+  { id: "1", name: "Padel Surabaya Barat", type: "Padel", distance: "0.8 km", status: "Buka", price: "Rp 60K–80K/jam", rating: 5,
+    image: { uri: "https://www.lalamove.com/hs-fs/hubfs/undefined-Jan-12-2026-04-50-53-3859-AM.jpeg?width=500&height=281&name=undefined-Jan-12-2026-04-50-53-3859-AM.jpeg" }
+  },
+  { id: "2", name: "GOR Arcadia", type: "Badminton", distance: "1.2 km", status: "Buka", price: "Rp 25K–40K/jam", rating: 4,
+    image: { uri: "https://admin.saraga.id/storage/images/1_1707477144.jpeg" }
+  },
+  { id: "3", name: "Basket Kenjeran", type: "Basket", distance: "2.5 km", status: "Tutup", price: "Gratis", rating: 4,
+    image: { uri: "https://berqwp-cdn.sfo3.cdn.digitaloceanspaces.com/cache/thegrandkenjeran.com/wp-content/uploads/2025/02/W-Arena-Basketball-Court-p2-jpg.webp?bwp" }
+  },
 ];
- 
+
 export default function FavoriteScreen() {
   const [favorites, setFavorites] = useState(dummyFavorites);
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState<"kategori" | "rating" | null>(null);
- 
+
   const categories = ["Semua", "Padel", "Badminton", "Basket"];
- 
+
   const handleDelete = (id: string) => {
     setFavorites((prev) => prev.filter((item) => item.id !== id));
   };
- 
+
   const filteredFavorites = favorites.filter((item) => {
     const categoryMatch = selectedCategory === "Semua" || item.type === selectedCategory;
     const ratingMatch = selectedRating === null || item.rating >= selectedRating;
     return categoryMatch && ratingMatch;
   });
- 
+
   const renderStars = (rating: number) =>
     Array.from({ length: 5 }, (_, i) => (
-      <Ionicons key={i} name={i < rating ? "star" : "star-outline"} size={12} color={i < rating ? "#F59E0B" : "#D1D5DB"} />
+      <Ionicons key={i} name={i < rating ? "star" : "star-outline"} size={11} color={i < rating ? "#F59E0B" : "rgba(255,255,255,0.4)"} />
     ));
- 
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tempat favorit</Text>
- 
+
+      {/* Header banner */}
+      <View style={styles.headerBanner}>
+        <View>
+          <Text style={styles.headerSub}>Koleksi kamu</Text>
+          <Text style={styles.headerTitle}>Tempat Tersimpan</Text>
+        </View>
+        <View style={styles.headerBadge}>
+          <Ionicons name="heart" size={16} color="#fff" />
+          <Text style={styles.headerBadgeText}>{favorites.length}</Text>
+        </View>
+      </View>
+
       {/* Filter chips */}
       <View style={styles.filterRow}>
-        {/* Chip Kategori */}
         <TouchableOpacity
           style={[styles.filterChip, (activeFilter === "kategori" || selectedCategory !== "Semua") && styles.filterChipActive]}
           onPress={() => setActiveFilter(activeFilter === "kategori" ? null : "kategori")}
         >
+          <Ionicons name="grid-outline" size={13} color={(activeFilter === "kategori" || selectedCategory !== "Semua") ? "#fff" : "#374151"} />
           <Text style={[styles.filterChipText, (activeFilter === "kategori" || selectedCategory !== "Semua") && styles.filterChipTextActive]}>
             {selectedCategory} {activeFilter === "kategori" ? "▲" : "▼"}
           </Text>
         </TouchableOpacity>
- 
-        {/* Chip Rating */}
+
         <TouchableOpacity
           style={[styles.filterChip, (activeFilter === "rating" || selectedRating !== null) && styles.filterChipActive]}
           onPress={() => setActiveFilter(activeFilter === "rating" ? null : "rating")}
         >
+          <Ionicons name="star-outline" size={13} color={(activeFilter === "rating" || selectedRating !== null) ? "#fff" : "#374151"} />
           <Text style={[styles.filterChipText, (activeFilter === "rating" || selectedRating !== null) && styles.filterChipTextActive]}>
             Rating {activeFilter === "rating" ? "▲" : "▼"}
           </Text>
         </TouchableOpacity>
+
+        {(selectedCategory !== "Semua" || selectedRating !== null) && (
+          <TouchableOpacity
+            style={styles.resetChip}
+            onPress={() => { setSelectedCategory("Semua"); setSelectedRating(null); }}
+          >
+            <Ionicons name="close" size={13} color="#6B7280" />
+            <Text style={styles.resetChipText}>Reset</Text>
+          </TouchableOpacity>
+        )}
       </View>
- 
+
       {/* Dropdown Kategori */}
       {activeFilter === "kategori" && (
         <View style={styles.dropdown}>
@@ -70,19 +97,13 @@ export default function FavoriteScreen() {
               style={[styles.dropdownItem, selectedCategory === cat && styles.dropdownItemActive]}
               onPress={() => { setSelectedCategory(cat); setActiveFilter(null); }}
             >
-              <Text style={[styles.dropdownItemText, selectedCategory === cat && styles.dropdownItemTextActive]}>
-                {cat}
-              </Text>
-              {selectedCategory === cat && (
-                <View style={styles.checkCircle}>
-                  <Ionicons name="checkmark" size={14} color="#fff" />
-                </View>
-              )}
+              <Text style={[styles.dropdownItemText, selectedCategory === cat && styles.dropdownItemTextActive]}>{cat}</Text>
+              {selectedCategory === cat && <View style={styles.checkCircle}><Ionicons name="checkmark" size={14} color="#fff" /></View>}
             </TouchableOpacity>
           ))}
         </View>
       )}
- 
+
       {/* Dropdown Rating */}
       {activeFilter === "rating" && (
         <View style={styles.dropdown}>
@@ -91,12 +112,8 @@ export default function FavoriteScreen() {
             style={[styles.dropdownItem, selectedRating === null && styles.dropdownItemActive]}
             onPress={() => { setSelectedRating(null); setActiveFilter(null); }}
           >
-            <Text style={[styles.dropdownItemText, selectedRating === null && styles.dropdownItemTextActive]}>
-              Semua rating
-            </Text>
-            {selectedRating === null && (
-              <View style={styles.checkCircle}><Ionicons name="checkmark" size={14} color="#fff" /></View>
-            )}
+            <Text style={[styles.dropdownItemText, selectedRating === null && styles.dropdownItemTextActive]}>Semua rating</Text>
+            {selectedRating === null && <View style={styles.checkCircle}><Ionicons name="checkmark" size={14} color="#fff" /></View>}
           </TouchableOpacity>
           {[1, 2, 3, 4, 5].map((n) => (
             <TouchableOpacity
@@ -112,137 +129,156 @@ export default function FavoriteScreen() {
                   {n === 5 ? "saja" : "ke atas"}
                 </Text>
               </View>
-              {selectedRating === n && (
-                <View style={styles.checkCircle}><Ionicons name="checkmark" size={14} color="#fff" /></View>
-              )}
+              {selectedRating === n && <View style={styles.checkCircle}><Ionicons name="checkmark" size={14} color="#fff" /></View>}
             </TouchableOpacity>
           ))}
         </View>
       )}
- 
+
       {/* Success banner */}
       {(selectedCategory !== "Semua" || selectedRating !== null) && (
         <View style={styles.successBanner}>
           <Ionicons name="checkmark" size={14} color={BLUE} />
           <Text style={styles.successBannerText}>
             {selectedCategory !== "Semua" && selectedRating !== null
-              ? `Kategori: ${selectedCategory} • Rating ${selectedRating}★ ke atas`
+              ? `${selectedCategory} • Rating ${selectedRating}★ ke atas`
               : selectedCategory !== "Semua"
-              ? `Filter: kategori ${selectedCategory}`
-              : `Filter: rating ${selectedRating}★ ke atas`}
+              ? `Kategori: ${selectedCategory}`
+              : `Rating ${selectedRating}★ ke atas`}
           </Text>
         </View>
       )}
- 
-      {/* Count */}
+
+      {/* Jumlah favorit */}
       {filteredFavorites.length > 0 && (
         <View style={styles.countRow}>
           <Ionicons name="heart" size={16} color={BLUE} />
           <Text style={styles.countText}>{filteredFavorites.length} tempat tersimpan</Text>
         </View>
       )}
- 
+
+      {/* List */}
       <FlatList
         data={filteredFavorites}
         keyExtractor={(item) => item.id}
         onScrollBeginDrag={() => setActiveFilter(null)}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card}>
-            {/* Thumbnail — persis struktur Home: width 110, height 100, badge putih pojok bawah */}
-            <View style={[styles.cardThumb, { backgroundColor: item.bgColor }]}>
-              <Text style={styles.categoryBadge}>{item.type}</Text>
+            <Image source={item.image} style={styles.cardBg} resizeMode="cover" />
+            <View style={styles.cardOverlay} />
+
+            <View style={styles.cardBadgeWrap}>
+              <Text style={styles.cardBadge}>{item.type}</Text>
             </View>
-            {/* Info  */}
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardName}>{item.name}</Text>
-              <Text style={styles.cardDistance}>📍 {item.distance}</Text>
-              <View style={styles.starsRow}>
-                {renderStars(item.rating)}
-              </View>
-              <View style={styles.cardRow}>
-                <View style={[styles.statusBadge, { backgroundColor: item.status === "Buka" ? "#D1FAE5" : "#FEE2E2" }]}>
-                  <Text style={[styles.statusText, { color: item.status === "Buka" ? "#065F46" : "#991B1B" }]}>
-                    {item.status}
-                  </Text>
+
+            <View style={[styles.cardStatusWrap, { backgroundColor: item.status === "Buka" ? "#D1FAE5" : "#FEE2E2" }]}>
+              <Text style={[styles.cardStatusText, { color: item.status === "Buka" ? "#065F46" : "#991B1B" }]}>{item.status}</Text>
+            </View>
+
+            <View style={styles.cardBottom}>
+              <View style={styles.cardBottomLeft}>
+                <Text style={styles.cardName}>{item.name}</Text>
+                <View style={styles.cardMeta}>
+                  <Ionicons name="location-outline" size={13} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.cardDistance}>{item.distance}</Text>
+                  <View style={styles.starRow}>{renderStars(item.rating)}</View>
                 </View>
-                <Text style={styles.cardPrice}>{item.price}</Text>
+              </View>
+              <View style={styles.cardPriceWrap}>
+                <Text style={styles.cardPrice}>{item.price.replace("/jam", "")}</Text>
+                <Text style={styles.cardPriceSub}>/jam</Text>
               </View>
             </View>
-            {/* Tombol hapus */}
+
             <TouchableOpacity onPress={() => handleDelete(item.id)} style={styles.deleteBtn}>
-              <Ionicons name="trash-outline" size={20} color="#9CA3AF" />
+              <Ionicons name="heart" size={18} color="#EF4444" />
             </TouchableOpacity>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="heart-outline" size={80} color="#D1D5DB" />
+            <View style={styles.emptyIconWrapper}>
+              <Ionicons name="heart-outline" size={48} color={BLUE} />
+            </View>
             <Text style={styles.emptyTitle}>Belum ada favorit</Text>
             <Text style={styles.emptySubtitle}>Tap ikon hati di halaman detail untuk menyimpan tempat</Text>
             <TouchableOpacity style={styles.exploreButton}>
-              <Ionicons name="add" size={18} color={BLUE} />
+              <Ionicons name="search-outline" size={16} color="#fff" />
               <Text style={styles.exploreButtonText}>Jelajahi tempat</Text>
             </TouchableOpacity>
           </View>
         }
-        ListFooterComponent={filteredFavorites.length > 0 ? <Text style={styles.hint}>Tap card untuk lihat detail tempat</Text> : null}
+        ListFooterComponent={filteredFavorites.length > 0 ? (
+          <View style={styles.footerRow}>
+            <Ionicons name="information-circle-outline" size={14} color="#9CA3AF" />
+            <Text style={styles.hint}>Tap card untuk lihat detail tempat</Text>
+          </View>
+        ) : null}
         contentContainerStyle={filteredFavorites.length === 0 ? styles.emptyFlex : styles.listContent}
       />
     </View>
   );
 }
- 
-const BLUE_CONST = "#0EA5E9";
- 
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB", paddingTop: 56, paddingHorizontal: 16 },
-  title: { fontSize: 24, fontWeight: "bold", color: "#111827", marginBottom: 16 },
- 
-  // Filter chips 
-  filterRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  filterChip: { borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },
+  container: { flex: 1, backgroundColor: "#F9FAFB", paddingTop: 16, paddingHorizontal: 16 },
+
+  headerBanner: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 14, elevation: 3 },
+  headerSub: { fontSize: 12, color: "#6B7280", marginBottom: 2 },
+  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#111827" },
+  headerBadge: { flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: BLUE, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  headerBadgeText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+
+  filterRow: { flexDirection: "row", gap: 8, marginBottom: 12, flexWrap: "wrap" },
+  filterChip: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7 },
   filterChipText: { fontSize: 14, color: "#374151" },
-  filterChipActive: { backgroundColor: BLUE_CONST, borderColor: BLUE_CONST },
+  filterChipActive: { backgroundColor: BLUE, borderColor: BLUE },
   filterChipTextActive: { color: "#fff", fontWeight: "600" },
- 
-  // Dropdown
+  resetChip: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#F3F4F6", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7 },
+  resetChipText: { fontSize: 13, color: "#6B7280" },
+
   dropdown: { backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 12, elevation: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12 },
   dropdownTitle: { fontSize: 12, color: "#9CA3AF", fontWeight: "600", marginBottom: 10, letterSpacing: 0.5 },
   dropdownItem: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 12, paddingHorizontal: 10, borderRadius: 10, marginBottom: 2 },
   dropdownItemActive: { backgroundColor: "#EFF6FF" },
   dropdownItemText: { fontSize: 15, color: "#374151" },
-  dropdownItemTextActive: { color: BLUE_CONST, fontWeight: "600" },
-  checkCircle: { width: 22, height: 22, borderRadius: 11, backgroundColor: BLUE_CONST, justifyContent: "center", alignItems: "center" },
- 
-  // Success banner 
+  dropdownItemTextActive: { color: BLUE, fontWeight: "600" },
+  checkCircle: { width: 22, height: 22, borderRadius: 11, backgroundColor: BLUE, justifyContent: "center", alignItems: "center" },
+
   successBanner: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#EFF6FF", borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 12 },
-  successBannerText: { fontSize: 13, color: BLUE_CONST, fontWeight: "600" },
- 
-  // Count
+  successBannerText: { fontSize: 13, color: BLUE, fontWeight: "600" },
+
   countRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
   countText: { color: "#374151", fontSize: 14 },
- 
-  // List
+
   listContent: { paddingBottom: 24 },
   emptyFlex: { flexGrow: 1, justifyContent: "center", alignItems: "center" },
-  emptyContainer: { alignItems: "center", gap: 12 },
+  emptyContainer: { alignItems: "center", gap: 12, paddingTop: 40 },
+  emptyIconWrapper: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#EFF6FF", justifyContent: "center", alignItems: "center" },
   emptyTitle: { fontSize: 18, fontWeight: "bold", color: "#111827" },
   emptySubtitle: { fontSize: 14, color: "#6B7280", textAlign: "center", paddingHorizontal: 24 },
-  exploreButton: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1.5, borderColor: BLUE_CONST, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
-  exploreButtonText: { color: BLUE_CONST, fontWeight: "600", fontSize: 15 },
- 
-  // Card 
-  card: { flexDirection: "row", backgroundColor: "#fff", borderRadius: 12, padding: 12, overflow: "hidden", marginBottom: 12, elevation: 3 },
-  cardThumb: { width: 110, height: 100, justifyContent: "flex-end", padding: 8 },
-  categoryBadge: { backgroundColor: "rgba(255,255,255,0.9)", fontSize: 10, fontWeight: "700", color: "#333", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, alignSelf: "flex-start" },
-  cardInfo: { flex: 1, padding: 12, justifyContent: "space-between" },
-  cardName: { fontSize: 15, fontWeight: "bold", color: "#111827" },
-  cardDistance: { fontSize: 13, color: "#6B7280", marginVertical: 4 },
-  starsRow: { flexDirection: "row", gap: 2, marginBottom: 4 },
-  cardRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  statusText: { fontSize: 12, fontWeight: "600" },
-  cardPrice: { fontSize: 13, fontWeight: "700", color: BLUE_CONST },
-  deleteBtn: { padding: 8, alignSelf: "center" },
-  hint: { textAlign: "center", color: "#9CA3AF", fontSize: 13, marginTop: 8 },
+  exploreButton: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: BLUE, borderRadius: 20, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 },
+  exploreButtonText: { color: "#fff", fontWeight: "600", fontSize: 15 },
+
+  card: { width: "100%", height: 160, borderRadius: 16, overflow: "hidden", marginBottom: 14, elevation: 4 },
+  cardBg: { ...StyleSheet.absoluteFillObject },
+  cardOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.35)" },
+  cardBadgeWrap: { position: "absolute", top: 12, left: 12, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  cardBadge: { fontSize: 11, fontWeight: "700", color: "#fff" },
+cardStatusWrap: { position: "absolute", top: 44, left: 12, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  cardStatusText: { fontSize: 11, fontWeight: "700" },
+  cardBottom: { position: "absolute", bottom: 0, left: 0, right: 0, padding: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" },
+  cardBottomLeft: { flex: 1, gap: 4 },
+  cardName: { fontSize: 16, fontWeight: "800", color: "#fff" },
+  cardMeta: { flexDirection: "row", alignItems: "center", gap: 6 },
+  cardDistance: { fontSize: 12, color: "rgba(255,255,255,0.8)" },
+  starRow: { flexDirection: "row", gap: 2 },
+  cardPriceWrap: { alignItems: "flex-end" },
+  cardPrice: { fontSize: 14, fontWeight: "800", color: "#fff" },
+  cardPriceSub: { fontSize: 11, color: "rgba(255,255,255,0.7)" },
+  deleteBtn: { position: "absolute", top: 10, right: 10, width: 34, height: 34, borderRadius: 17, backgroundColor: "rgba(255,255,255,0.9)", justifyContent: "center", alignItems: "center" },
+  deleteBtnText: { color: "#fff", fontSize: 12, fontWeight: "600" },
+
+  footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 8 },
+  hint: { textAlign: "center", color: "#9CA3AF", fontSize: 13 },
 });
