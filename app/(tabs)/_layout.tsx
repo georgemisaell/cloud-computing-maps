@@ -1,19 +1,21 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
+import React from "react";
 
 export default function RootLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#ffd33d",
+        tabBarActiveTintColor: "#007AFF",
         headerStyle: {
-          backgroundColor: "#25292e",
+          backgroundColor: "#ffffff",
         },
-        headerShadowVisible: false,
-        headerTintColor: "#fff",
+        headerShadowVisible: true,
+        headerTintColor: "#000000",
         tabBarStyle: {
-          backgroundColor: "#25292e",
+          backgroundColor: "#ffffff",
         },
+        tabBarInactiveTintColor: "#8e8e93",
       }}
     >
       <Tabs.Screen
@@ -29,6 +31,7 @@ export default function RootLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="maps"
         options={{
@@ -42,6 +45,7 @@ export default function RootLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="favorite"
         options={{
@@ -55,13 +59,14 @@ export default function RootLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? "person-sharp" : "person-circle-sharp"}
+              name={focused ? "person-sharp" : "person-outline"}
               color={color}
               size={24}
             />
