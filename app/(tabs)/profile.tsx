@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { useState } from "react";
 import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { router } from "expo-router";
 
 const BLUE = "#0EA5E9";
 const DARK = "#0F172A";
@@ -84,7 +85,7 @@ export default function ProfileScreen() {
           <Text style={[styles.menuSectionTitle, { color: theme.subText }]}>Menu</Text>
 
           <View style={[styles.menuCard, { backgroundColor: theme.card }]}>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/history")}>
               <View style={[styles.menuIconWrap, { backgroundColor: "#EFF6FF" }]}>
                 <Ionicons name="time-outline" size={18} color={BLUE} />
               </View>
