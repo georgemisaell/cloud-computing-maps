@@ -1,5 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+// import { useState } from "react";
+import React, { useState } from "react";
+import { router } from "expo-router";
+
 import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const VENUES = [
@@ -257,7 +260,15 @@ export default function Index() {
           </View>
         ) : (
           filteredVenues.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.card}>
+           <TouchableOpacity
+  key={item.id}
+  style={styles.card}
+  // ✅ Fix - kirim data venue yang diklik
+onPress={() => router.push({
+  pathname: "/detail_tempat",
+  params: { venue: JSON.stringify(item) },
+})}
+>
 
               {/* Background foto */}
                 <Image

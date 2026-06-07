@@ -6,16 +6,21 @@ export default function RootLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#007AFF",
-        headerStyle: {
-          backgroundColor: "#ffffff",
-        },
-        headerShadowVisible: true,
-        headerTintColor: "#000000",
+        headerShown: false,
+        tabBarActiveTintColor: "#00BFA5",
+        tabBarInactiveTintColor: "#9CA3AF",
         tabBarStyle: {
-          backgroundColor: "#ffffff",
+          backgroundColor: "#FFFFFF",
+          borderTopWidth: 1,
+          borderTopColor: "#F3F4F6",
+          height: 70,
+          paddingBottom: 12,
+          paddingTop: 8,
         },
-        tabBarInactiveTintColor: "#8e8e93",
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+        },
       }}
     >
       <Tabs.Screen
@@ -23,25 +28,17 @@ export default function RootLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "home-sharp" : "home-outline"}
-              color={color}
-              size={24}
-            />
+            <Ionicons name={focused ? "home-sharp" : "home-outline"} color={color} size={24} />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="maps"
+        name="location_permission"
         options={{
-          title: "Maps",
+          title: "Map",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "map-sharp" : "map-outline"}
-              color={color}
-              size={24}
-            />
+            <Ionicons name={focused ? "map-sharp" : "map-outline"} color={color} size={24} />
           ),
         }}
       />
@@ -51,11 +48,7 @@ export default function RootLayout() {
         options={{
           title: "Favorite",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "heart-sharp" : "heart-outline"}
-              color={color}
-              size={24}
-            />
+            <Ionicons name={focused ? "heart-sharp" : "heart-outline"} color={color} size={24} />
           ),
         }}
       />
@@ -65,13 +58,19 @@ export default function RootLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "person-sharp" : "person-outline"}
-              color={color}
-              size={24}
-            />
+            <Ionicons name={focused ? "person-sharp" : "person-outline"} color={color} size={24} />
           ),
         }}
+      />
+
+      {/* Tidak muncul di tab tapi dapat bottom nav otomatis */}
+      <Tabs.Screen
+        name="map_view"
+        options={{ tabBarButton: () => null, headerShown: false }}
+      />
+      <Tabs.Screen
+        name="venue_preview"
+        options={{ tabBarButton: () => null, headerShown: false }}
       />
     </Tabs>
   );
