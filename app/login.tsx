@@ -81,7 +81,7 @@ export default function Login() {
           <TextInput
             style={styles.input}
             placeholder="Nama Lengkap"
-            placeholderTextColor="#aaa"
+            placeholderTextColor="#9CA3AF"
             value={fullName}
             onChangeText={setFullName}
             autoCapitalize="words"
@@ -92,7 +92,7 @@ export default function Login() {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#9CA3AF"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
@@ -103,7 +103,7 @@ export default function Login() {
         <TextInput
           style={styles.input}
           placeholder="Password"
-          placeholderTextColor="#aaa"
+          placeholderTextColor="#9CA3AF"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -138,64 +138,72 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#25292e",
+    backgroundColor: "#E8F0F7",
     justifyContent: "center",
     alignItems: "center",
   },
   formCard: {
-    width: "85%",
-    backgroundColor: "#1e222b",
-    borderRadius: 16,
-    padding: 24,
+    width: "88%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 28,
+    padding: 32,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
     elevation: 8,
   },
   title: {
-    color: "#fff",
-    fontSize: 24,
-    fontWeight: "bold",
+    color: "#1A1A2E",
+    fontSize: 26,
+    fontWeight: "800",
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   subtitle: {
-    color: "#aaa",
-    fontSize: 14,
+    color: "#6B7280",
+    fontSize: 15,
     textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 28,
+    lineHeight: 22,
   },
   input: {
     width: "100%",
-    backgroundColor: "#2a2f3b",
-    color: "#fff",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+    color: "#1A1A2E",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
     marginBottom: 16,
-    fontSize: 16,
+    fontSize: 15,
   },
   buttonLogin: {
-    backgroundColor: "#02b875",
+    backgroundColor: "#00BFA5",
     width: "100%",
-    paddingVertical: 14,
-    borderRadius: 8,
-    marginTop: 8,
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginTop: 12,
+    shadowColor: "#00BFA5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonText: {
-    color: "#fff",
-    fontWeight: "bold",
+    color: "#FFFFFF",
+    fontWeight: "700",
     fontSize: 16,
     textAlign: "center",
+    letterSpacing: 0.5,
   },
   buttonSignUp: {
     width: "100%",
-    paddingVertical: 10,
+    paddingVertical: 14,
   },
   buttonSignUpText: {
-    color: "#02b875",
-    fontSize: 14,
+    color: "#00BFA5",
+    fontSize: 15,
+    fontWeight: "600",
     textAlign: "center",
   },
 });
