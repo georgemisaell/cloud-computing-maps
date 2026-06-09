@@ -1,6 +1,6 @@
 import * as Location from "expo-location";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Dimensions,
@@ -17,6 +17,16 @@ const { width, height } = Dimensions.get("window");
 export default function LocationPermissionScreen() {
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const check = async () => {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      if (status === "granted") {
+        router.replace("/map_view");
+      }
+    };
+    check();
+  }, []);
+
   const handleAllow = async () => {
     setLoading(true);
     try {
@@ -28,7 +38,7 @@ export default function LocationPermissionScreen() {
         );
         return;
       }
-      router.push("/map_view");
+      router.replace("/map_view");
     } catch (error) {
       Alert.alert("Error", "Gagal meminta izin lokasi");
     } finally {
@@ -37,7 +47,7 @@ export default function LocationPermissionScreen() {
   };
 
   const handleSkip = () => {
-    router.push("/map_view");
+    router.replace("/map_view");
   };
 
   return (

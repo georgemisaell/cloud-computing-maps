@@ -34,7 +34,7 @@ export default function RootLayout() {
       />
 
       <Tabs.Screen
-        name="location_permission"
+        name="map_view"
         options={{
           title: "Map",
           tabBarIcon: ({ color, focused }) => (
@@ -65,12 +65,12 @@ export default function RootLayout() {
 
       {/* Tidak muncul di tab tapi dapat bottom nav otomatis */}
       <Tabs.Screen
-        name="map_view"
-        options={{ tabBarButton: () => null, headerShown: false }}
+        name="location_permission"
+        options={{ href: null, headerShown: false }}
       />
       <Tabs.Screen
         name="venue_preview"
-        options={{ tabBarButton: () => null, headerShown: false }}
+        options={{ href: null, headerShown: false }}
       />
     </Tabs>
   );
