@@ -19,6 +19,20 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
 
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export interface Venue {
   id: string;
   name: string;
@@ -28,6 +42,8 @@ export interface Venue {
   price_min: number;
   price_max: number;
   rating?: number;
+  distance?: string;
+  status?: string;
   category?: { name: string; color: string };
   image?: string;
 }
@@ -64,16 +80,17 @@ export default function MapViewScreen() {
       
       // 1. Get User Location
       let { status } = await Location.requestForegroundPermissionsAsync();
+      let currentLocation: Location.LocationObject | null = null;
       if (status !== "granted") {
         Alert.alert("Izin Ditolak", "Gagal mendapatkan lokasi Anda.");
       } else {
-        const location = await Location.getCurrentPositionAsync({});
-        setUserLocation(location);
+        currentLocation = await Location.getCurrentPositionAsync({});
+        setUserLocation(currentLocation);
         
         // Animate to user location if map is ready
         mapRef.current?.animateToRegion({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude,
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }, 1000);
@@ -81,27 +98,52 @@ export default function MapViewScreen() {
 
       // 2. Fetch Venues
       const { data, error } = await supabase
-        .from("places")
+        .from("places_with_ratings")
         .select(`
-          id, name, address, lat, lng, price_min, price_max,
+          id, name, address, lat, lng, price_min, price_max, avg_rating,
           category:categories(name, color),
-          place_images(image_url)
+          place_images(image_url),
+          operating_hours(day_of_week, open_time, close_time, is_closed)
         `);
 
       if (error) throw error;
 
-      const formattedData: Venue[] = (data || []).map((v: any) => ({
-        id: v.id,
-        name: v.name,
-        address: v.address,
-        lat: v.lat,
-        lng: v.lng,
-        price_min: v.price_min,
-        price_max: v.price_max,
-        rating: 4.5,
-        category: Array.isArray(v.category) ? v.category[0] : v.category,
-        image: v.place_images?.[0]?.image_url || null
-      }));
+      const now = new Date();
+      const currentDay = now.getDay();
+      const currentTime = now.getHours() * 100 + now.getMinutes();
+
+      const formattedData: Venue[] = (data || []).map((v: any) => {
+        let venueStatus = "Tutup";
+        const todayHours = v.operating_hours?.find((h: any) => h.day_of_week === currentDay);
+        if (todayHours && !todayHours.is_closed) {
+          const open = todayHours.open_time ? parseInt(todayHours.open_time.replace(/:/g, "")) : 0;
+          const close = todayHours.close_time ? parseInt(todayHours.close_time.replace(/:/g, "")) : 0;
+          if (currentTime >= open && currentTime <= close) {
+            venueStatus = "Buka";
+          }
+        }
+
+        let distText = "Dekat kamu";
+        if (currentLocation) {
+          const dist = getDistance(currentLocation.coords.latitude, currentLocation.coords.longitude, v.lat, v.lng);
+          distText = `${dist.toFixed(1)} km`;
+        }
+
+        return {
+          id: v.id,
+          name: v.name,
+          address: v.address,
+          lat: v.lat,
+          lng: v.lng,
+          price_min: v.price_min,
+          price_max: v.price_max,
+          rating: v.avg_rating || 0,
+          distance: distText,
+          status: venueStatus,
+          category: Array.isArray(v.category) ? v.category[0] : v.category,
+          image: v.place_images?.[0]?.image_url || null
+        };
+      });
 
       setVenues(formattedData);
     } catch (error: any) {
@@ -150,9 +192,9 @@ export default function MapViewScreen() {
                       ...venue,
                       initial: venue.name.charAt(0),
                       color: color,
-                      distance: "Dekat kamu", 
+                      distance: venue.distance, 
                       price: `Rp ${venue.price_min/1000}K–${venue.price_max/1000}K/jam`,
-                      status: "Buka",
+                      status: venue.status,
                       sport: venue.category?.name || "Sport",
                       image: venue.image
                     }) 
