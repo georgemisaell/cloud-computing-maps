@@ -1,20 +1,39 @@
-import React from "react";
+import * as Location from "expo-location";
+import { router } from "expo-router";
+import React, { useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
+  Alert,
   Dimensions,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
 export default function LocationPermissionScreen() {
-  const handleAllow = () => {
-    router.push("/map_view");
+  const [loading, setLoading] = useState(false);
+
+  const handleAllow = async () => {
+    setLoading(true);
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Izin Ditolak",
+          "Aplikasi membutuhkan izin lokasi untuk menampilkan tempat terdekat."
+        );
+        return;
+      }
+      router.push("/map_view");
+    } catch (error) {
+      Alert.alert("Error", "Gagal meminta izin lokasi");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSkip = () => {
@@ -52,12 +71,19 @@ export default function LocationPermissionScreen() {
           <TouchableOpacity
             onPress={handleAllow}
             activeOpacity={0.85}
-            style={styles.allowButton}
+            style={[styles.allowButton, loading && { opacity: 0.7 }]}
+            disabled={loading}
           >
-            <Text style={styles.allowButtonText}>Izinkan</Text>
+            <Text style={styles.allowButtonText}>
+              {loading ? "Meminta Izin..." : "Izinkan"}
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
+          <TouchableOpacity
+            onPress={handleSkip}
+            style={styles.skipButton}
+            disabled={loading}
+          >
             <Text style={styles.skipText}>Lewati</Text>
           </TouchableOpacity>
         </View>
@@ -177,15 +203,6 @@ const styles = StyleSheet.create({
   justifyContent: "center",
   marginBottom: 16,
 },
-  gradientOverlay: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: "50%",
-    backgroundColor: "#00B4D8",
-    opacity: 0.5,
-  },
   allowButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
