@@ -15,6 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 let Svg: any, Path: any, Circle: any, Rect: any, Line: any;
 try {
@@ -392,6 +393,7 @@ export default function VenueDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const fetchVenueDetail = useCallback(async () => {
     try {
@@ -501,39 +503,39 @@ export default function VenueDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView
+      <View
         style={[
           styles.safeArea,
-          { justifyContent: "center", alignItems: "center" },
+          { justifyContent: "center", alignItems: "center", paddingTop: insets.top },
         ]}
       >
         <ActivityIndicator size="large" color="#0EA5E9" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!venue) {
     return (
-      <SafeAreaView
+      <View
         style={[
           styles.safeArea,
-          { justifyContent: "center", alignItems: "center" },
+          { justifyContent: "center", alignItems: "center", paddingTop: insets.top },
         ]}
       >
         <Text>Tempat tidak ditemukan.</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: "#0EA5E9", marginTop: 10 }}>Kembali</Text>
         </TouchableOpacity>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <StatusBar
-        barStyle="light-content"
-        translucent
-        backgroundColor="transparent"
+        barStyle="dark-content"
+        translucent={false}
+        backgroundColor="#FFFFFF"
       />
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -565,12 +567,7 @@ export default function VenueDetailScreen() {
             )}
           </ScrollView>
 
-          <TouchableOpacity
-            style={styles.overlayBtnLeft}
-            onPress={() => router.back()}
-          >
-            <IconChevronLeft size={20} color="#fff" />
-          </TouchableOpacity>
+
 
           <TouchableOpacity
             style={styles.overlayBtnRight}
@@ -705,7 +702,7 @@ export default function VenueDetailScreen() {
           <Text style={styles.routeButtonText}>Lihat rute</Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -716,18 +713,7 @@ const styles = StyleSheet.create({
   carouselContainer: { width: SCREEN_WIDTH, height: IMAGE_HEIGHT },
   carouselImage: { width: SCREEN_WIDTH, height: IMAGE_HEIGHT },
 
-  overlayBtnLeft: {
-    position: "absolute",
-    top: 16,
-    left: 16,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 10,
-  },
+
   overlayBtnRight: {
     position: "absolute",
     top: 16,

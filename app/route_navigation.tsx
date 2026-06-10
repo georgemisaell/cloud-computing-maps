@@ -1,15 +1,18 @@
-import React from "react";
+import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
+  Dimensions,
   Linking,
   StatusBar,
-  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, router } from "expo-router";
+import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
 const MAP_HEIGHT = height * 0.62;
@@ -17,52 +20,102 @@ const MAP_HEIGHT = height * 0.62;
 export default function RouteNavigationScreen() {
   const params = useLocalSearchParams();
   const venue = params.venue ? JSON.parse(params.venue as string) : {};
+  const mapRef = useRef<MapView>(null);
+  const insets = useSafeAreaInsets();
+
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const destLat = venue.lat ?? venue.latitude ?? -7.2575;
+  const destLng = venue.lng ?? venue.longitude ?? 112.7521;
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      let loc = await Location.getCurrentPositionAsync({});
+      setLocation(loc);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (location && destLat && destLng && mapRef.current) {
+      mapRef.current.fitToCoordinates(
+        [
+          { latitude: location.coords.latitude, longitude: location.coords.longitude },
+          { latitude: destLat, longitude: destLng },
+        ],
+        {
+          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+          animated: true,
+        }
+      );
+    }
+  }, [location, destLat, destLng]);
 
   const handleOpenMaps = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude ?? -7.2575},${venue.longitude ?? 112.7521}&travelmode=driving`;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`;
     Linking.openURL(url);
   };
 
+  const handleCompassPress = () => {
+    if (location && mapRef.current) {
+      mapRef.current.animateToRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#EEF4EE" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#EEF4EE" translucent={false} />
 
-      {/* Map ilustrasi — langsung dari atas, tanpa header */}
+      {/* Map Area */}
       <View style={[styles.mapContainer, { height: MAP_HEIGHT }]}>
+        <MapView
+          ref={mapRef}
+          style={StyleSheet.absoluteFillObject}
+          provider={PROVIDER_DEFAULT}
+          showsUserLocation={true}
+          showsMyLocationButton={false}
+          initialRegion={{
+            latitude: destLat,
+            longitude: destLng,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+          }}
+        >
+          {location && (
+            <Polyline
+              coordinates={[
+                { latitude: location.coords.latitude, longitude: location.coords.longitude },
+                { latitude: destLat, longitude: destLng },
+              ]}
+              strokeColor="#2196F3"
+              strokeWidth={4}
+              lineDashPattern={[1]}
+            />
+          )}
 
-        <View style={StyleSheet.absoluteFill}>
-          <View style={styles.park} />
-          <View style={styles.roadV} />
-          <View style={styles.roadH1} />
-          <View style={styles.roadH2} />
-          <View style={styles.roadDiag} />
-        </View>
-
-        {/* Rute biru */}
-        <View style={styles.routeV} />
-        <View style={styles.routeCorner} />
-        <View style={styles.routeH} />
-
-        {/* User dot */}
-        <View style={styles.userDotWrapper}>
-          <View style={styles.userDotRing}>
-            <View style={styles.userDotInner} />
-          </View>
-        </View>
-
-        {/* Destination pin */}
-        <View style={styles.destWrapper}>
-          <View style={styles.destPin}>
-            <Ionicons name="location" size={20} color="#fff" />
-          </View>
-          <View style={styles.destTail} />
-          <View style={styles.destLabel}>
-            <Text style={styles.destLabelText}>{venue.name ?? "GOR Arcadia"}</Text>
-          </View>
-        </View>
+          <Marker coordinate={{ latitude: destLat, longitude: destLng }}>
+            <View style={styles.destWrapper}>
+              <View style={styles.destPin}>
+                <Ionicons name="location" size={20} color="#fff" />
+              </View>
+              <View style={styles.destTail} />
+            </View>
+          </Marker>
+        </MapView>
 
         {/* Compass */}
-        <TouchableOpacity style={styles.compassButton}>
+        <TouchableOpacity style={styles.compassButton} onPress={handleCompassPress}>
           <Ionicons name="navigate" size={20} color="#374151" />
         </TouchableOpacity>
       </View>
@@ -73,12 +126,14 @@ export default function RouteNavigationScreen() {
 
         <View style={styles.etaRow}>
           <View>
-            <Text style={styles.etaTime}>~5 menit</Text>
-            <Text style={styles.etaDetail}>{venue.distance ?? "1.2 km"} • Rute tercepat</Text>
+            <Text style={styles.etaTime}>{venue.name ?? "Tujuan"}</Text>
+            <Text style={styles.etaDetail}>
+              {venue.distance ? `${venue.distance} • ` : ""}Rute langsung
+            </Text>
           </View>
-          <View style={styles.compassBtn}>
+          <TouchableOpacity style={styles.compassBtn} onPress={handleCompassPress}>
             <Ionicons name="navigate-outline" size={22} color="#2196F3" />
-          </View>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity onPress={handleOpenMaps} activeOpacity={0.85} style={styles.mapsButton}>
@@ -103,104 +158,12 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 
-  park: {
-    position: "absolute",
-    top: MAP_HEIGHT * 0.08,
-    left: width * 0.04,
-    width: width * 0.42,
-    height: MAP_HEIGHT * 0.68,
-    borderRadius: 999,
-    backgroundColor: "#C8DFC0",
-  },
-  roadV: {
-    position: "absolute",
-    top: 0, bottom: 0,
-    left: "53%",
-    width: 26,
-    backgroundColor: "#FFFFFF",
-  },
-  roadH1: {
-    position: "absolute",
-    top: "58%",
-    left: 0, right: 0,
-    height: 22,
-    backgroundColor: "#FFFFFF",
-  },
-  roadH2: {
-    position: "absolute",
-    top: "80%",
-    left: 0, right: 0,
-    height: 16,
-    backgroundColor: "#FFFFFF",
-  },
-  roadDiag: {
-    position: "absolute",
-    top: "28%",
-    left: "-8%",
-    width: "65%",
-    height: 18,
-    backgroundColor: "#FFFFFF",
-    transform: [{ rotate: "33deg" }],
-  },
 
-  routeV: {
-    position: "absolute",
-    top: "42%",
-    left: "39%",
-    width: 5,
-    height: "18%",
-    backgroundColor: "#2196F3",
-    borderRadius: 3,
-    zIndex: 2,
-  },
-  routeCorner: {
-    position: "absolute",
-    top: "57.5%",
-    left: "38.5%",
-    width: 14,
-    height: 14,
-    borderBottomRightRadius: 10,
-    borderBottomWidth: 5,
-    borderRightWidth: 5,
-    borderColor: "#2196F3",
-    zIndex: 2,
-  },
-  routeH: {
-    position: "absolute",
-    top: "58%",
-    left: "41%",
-    width: "20%",
-    height: 5,
-    backgroundColor: "#2196F3",
-    borderRadius: 3,
-    zIndex: 2,
-  },
 
-  userDotWrapper: {
-    position: "absolute",
-    top: "37%",
-    left: "36%",
-    zIndex: 3,
-  },
-  userDotRing: {
-    width: 26, height: 26, borderRadius: 13,
-    backgroundColor: "rgba(33,150,243,0.2)",
-    alignItems: "center", justifyContent: "center",
-    borderWidth: 1.5,
-    borderColor: "rgba(33,150,243,0.35)",
-  },
-  userDotInner: {
-    width: 13, height: 13, borderRadius: 6.5,
-    backgroundColor: "#2196F3",
-    borderWidth: 2, borderColor: "#FFFFFF",
-  },
+
 
   destWrapper: {
-    position: "absolute",
-    top: "6%",
-    left: "60%",
     alignItems: "center",
-    zIndex: 3,
   },
   destPin: {
     width: 44, height: 44, borderRadius: 22,
