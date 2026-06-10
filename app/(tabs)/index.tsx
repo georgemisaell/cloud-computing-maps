@@ -6,18 +6,18 @@ import { router } from "expo-router";
 import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const VENUES = [
-  { 
-    id: "1", category: "Padel", name: "Padel Surabaya Barat", 
+  {
+    id: "1", category: "Padel", name: "Padel Surabaya Barat",
     distance: "0.8 km", status: "Buka", price: "Rp 60K–80K/jam", rating: 5,
     image: { uri: "https://www.lalamove.com/hs-fs/hubfs/undefined-Jan-12-2026-04-50-53-3859-AM.jpeg?width=500&height=281&name=undefined-Jan-12-2026-04-50-53-3859-AM.jpeg" }
   },
-  { 
-    id: "2", category: "Badminton", name: "GOR Arcadia", 
+  {
+    id: "2", category: "Badminton", name: "GOR Arcadia",
     distance: "1.2 km", status: "Buka", price: "Rp 25K–40K/jam", rating: 4,
     image: { uri: "https://admin.saraga.id/storage/images/1_1707477144.jpeg" }
   },
-  { 
-    id: "3", category: "Basket", name: "Basket Kenjeran", 
+  {
+    id: "3", category: "Basket", name: "Basket Kenjeran",
     distance: "2.5 km", status: "Buka", price: "Rp 150K–200K/jam", rating: 4,
     image: { uri: "https://berqwp-cdn.sfo3.cdn.digitaloceanspaces.com/cache/thegrandkenjeran.com/wp-content/uploads/2025/02/W-Arena-Basketball-Court-p2-jpg.webp?bwp" }
   },
@@ -60,14 +60,16 @@ export default function Index() {
       {/*statis */}
       <View style={styles.staticContent}>
 
-        {/* Header baru */}
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headline}>Temukan tempat olahraga {"\n"} favoritmu 🏆</Text>
+          <Text style={styles.headline}>Temukan tempat olahraga {"\n"} favoritmu</Text>
 
-          <Image
-            source={{ uri: "https://i.pravatar.cc/150?img=47" }}
-            style={styles.avatarCircle}
-          />
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={{ uri: "https://i.pravatar.cc/150?img=47" }}
+              style={styles.avatarCircle}
+            />
+          </View>
         </View>
 
         {/* Search */}
@@ -88,7 +90,11 @@ export default function Index() {
             style={[styles.filterChip, (activeFilter === "kategori" || selectedCategory !== "Semua") && styles.filterChipActive]}
             onPress={() => setActiveFilter(activeFilter === "kategori" ? null : "kategori")}
           >
-            <Text style={[styles.filterChipText, (activeFilter === "kategori" || selectedCategory !== "Semua") && styles.filterChipTextActive]}>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.filterChipText, (activeFilter === "kategori" || selectedCategory !== "Semua") && styles.filterChipTextActive]}
+            >
               {selectedCategory} {activeFilter === "kategori" ? "▲" : "▼"}
             </Text>
           </TouchableOpacity>
@@ -103,21 +109,42 @@ export default function Index() {
               f === "jarak"
                 ? selectedJarak === "terdekat" ? "Dekat" : selectedJarak === "terjauh" ? "Jauh" : "Jarak"
                 : f === "harga"
-                ? selectedHarga === "termurah" ? "Murah" : selectedHarga === "termahal" ? "Mahal" : "Harga"
-                : "Rating";
+                  ? selectedHarga === "termurah" ? "Murah" : selectedHarga === "termahal" ? "Mahal" : "Harga"
+                  : "Rating";
             return (
               <TouchableOpacity
                 key={f}
                 style={[styles.filterChip, (isOpen || isApplied) && styles.filterChipActive]}
                 onPress={() => setActiveFilter(isOpen ? null : f)}
               >
-                <Text style={[styles.filterChipText, (isOpen || isApplied) && styles.filterChipTextActive]}>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={[styles.filterChipText, (isOpen || isApplied) && styles.filterChipTextActive]}
+                >
                   {label} {isOpen ? "▲" : "▼"}
                 </Text>
               </TouchableOpacity>
             );
           })}
         </View>
+
+        {/* Reset chip */}
+        {(selectedCategory !== "Semua" || selectedJarak !== "none" || selectedHarga !== "semua" || selectedRating !== null) && (
+          <TouchableOpacity
+            style={styles.resetChip}
+            onPress={() => {
+              setSelectedCategory("Semua");
+              setSelectedJarak("none");
+              setSelectedHarga("semua");
+              setSelectedRating(null);
+              setActiveFilter(null);
+            }}
+          >
+            <Ionicons name="close-circle" size={14} color="#6B7280" />
+            <Text style={styles.resetChipText}>Reset filter</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Dropdown Kategori */}
         {activeFilter === "kategori" && (
@@ -220,29 +247,31 @@ export default function Index() {
         )}
 
         {/* Success banner */}
-        {(() => {
-          const parts: string[] = [];
-          if (selectedCategory !== "Semua") parts.push(`Kategori: ${selectedCategory}`);
-          if (selectedJarak === "terdekat") parts.push("Diurutkan: terdekat");
-          if (selectedJarak === "terjauh") parts.push("Diurutkan: terjauh");
-          if (selectedHarga === "termurah") parts.push("Harga: termurah dulu");
-          if (selectedHarga === "termahal") parts.push("Harga: termahal dulu");
-          if (selectedRating !== null) parts.push(`Rating ${selectedRating}★ ke atas`);
-          if (parts.length === 0) return null;
-          return (
-            <View style={styles.successBanner}>
-              <Ionicons name="checkmark" size={14} color="#0EA5E9" />
-              <Text style={styles.successBannerText}>{parts.join(" • ")}</Text>
-            </View>
-          );
-        })()}
+        {(selectedCategory !== "Semua" || selectedJarak !== "none" || selectedHarga !== "semua" || selectedRating !== null) && (
+          <View style={styles.successBanner}>
+            <Ionicons name="checkmark" size={14} color="#0EA5E9" />
+            <Text style={styles.successBannerText}>
+              {[
+                selectedCategory !== "Semua" && `${selectedCategory}`,
+                selectedJarak === "terdekat" && "terdekat",
+                selectedJarak === "terjauh" && "terjauh",
+                selectedHarga === "termurah" && "termurah dulu",
+                selectedHarga === "termahal" && "termahal dulu",
+                selectedRating !== null && `Rating ${selectedRating}★ ke atas`,
+              ]
+                .filter(Boolean)
+                .join(" • ")}
+            </Text>
+          </View>
+        )}
 
         {/* Section title */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Rekomendasi Terdekat</Text>
-          <TouchableOpacity>
-            <Text style={styles.sectionLink}>Lihat semua</Text>
-          </TouchableOpacity>
+          <View style={styles.venueCount}>
+            <Ionicons name="location-outline" size={14} color={BLUE} />
+            <Text style={styles.venueCountText}>{filteredVenues.length} tempat ditemukan</Text>
+          </View>
         </View>
 
       </View>
@@ -260,23 +289,22 @@ export default function Index() {
           </View>
         ) : (
           filteredVenues.map((item) => (
-           <TouchableOpacity
-  key={item.id}
-  style={styles.card}
-  // ✅ Fix - kirim data venue yang diklik
-onPress={() => router.push({
-  pathname: "/detail_tempat",
-  params: { venue: JSON.stringify(item) },
-})}
->
+            <TouchableOpacity
+              key={item.id}
+              style={styles.card}
+              onPress={() => router.push({
+                pathname: "/detail_tempat",
+                params: { venue: JSON.stringify(item) },
+              })}
+            >
 
               {/* Background foto */}
-                <Image
-                  source={item.image}
-                  style={styles.cardBg}
-                  resizeMode="cover"
-                />
-                
+              <Image
+                source={item.image}
+                style={styles.cardBg}
+                resizeMode="cover"
+              />
+
               {/* Overlay gelap di bawah */}
               <View style={styles.cardOverlay} />
 
@@ -311,6 +339,11 @@ onPress={() => router.push({
             </TouchableOpacity>
           ))
         )}
+
+        <View style={styles.footerRow}>
+          <Ionicons name="information-circle-outline" size={14} color="#9CA3AF" />
+          <Text style={styles.hint}>Tap card untuk lihat detail tempat</Text>
+        </View>
       </ScrollView>
 
     </SafeAreaView>
@@ -324,27 +357,32 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 20, paddingBottom: 40, paddingTop: 4 },
 
   // Header
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingTop: 16, marginBottom: 16 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "stretch", paddingTop: 16, marginBottom: 16, gap: 12 },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  avatarCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: BLUE, justifyContent: "center", alignItems: "center" },
+  avatarCircle: { width: 60, height: 60, borderRadius: 30, backgroundColor: BLUE, justifyContent: "center", alignItems: "center" },
   avatarText: { color: "#fff", fontWeight: "700", fontSize: 18 },
+  avatarWrapper: { justifyContent: "center", alignItems: "center" },
   greeting: { fontSize: 12, color: "#9CA3AF" },
   userName: { fontSize: 16, fontWeight: "700", color: "#111827" },
   notifBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#fff", justifyContent: "center", alignItems: "center", elevation: 2 },
 
   // Headline
-  headline: { fontSize: 20, fontWeight: "800", color: "#111827", lineHeight: 30, marginBottom: 16 },
+  headline: { flex: 1, fontSize: 20, fontWeight: "800", color: "#111827", lineHeight: 30, marginBottom: 16 },
 
   // Search
   searchBar: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 14, elevation: 2 },
   searchInput: { flex: 1, fontSize: 14, color: "#333" },
 
   // Filter chips
-  filterRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  filterChip: { flex: 1, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 7, alignItems: "center" },
-  filterChipText: { fontSize: 12, color: "#374151" },
+  filterRow: { flexDirection: "row", gap: 8, marginBottom: 8 },
+  filterChip: { flex: 1, minWidth: 0, borderWidth: 1, borderColor: "#E5E7EB", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 7, alignItems: "center", overflow: "hidden", },
+  filterChipText: { fontSize: 12, color: "#374151", flexShrink: 1, },
   filterChipActive: { backgroundColor: BLUE, borderColor: BLUE },
   filterChipTextActive: { color: "#fff", fontWeight: "600" },
+
+  // Reset chip
+  resetChip: { flexShrink: 1, alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#F3F4F6", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 12 },
+  resetChipText: { fontSize: 12, color: "#6B7280", fontWeight: "500" },
 
   // Dropdown
   dropdown: { backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 12, elevation: 8, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12 },
@@ -363,6 +401,8 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: "#111827" },
   sectionLink: { fontSize: 13, color: BLUE, fontWeight: "600" },
+  venueCount: { flexDirection: "row", alignItems: "center", gap: 4 },
+  venueCountText: { fontSize: 13, color: BLUE, fontWeight: "600" },
 
   // Card
   card: { width: "100%", height: 160, borderRadius: 16, overflow: "hidden", marginBottom: 14, elevation: 4 },
@@ -381,6 +421,9 @@ const styles = StyleSheet.create({
   cardPriceWrap: { alignItems: "flex-end" },
   cardPrice: { fontSize: 14, fontWeight: "800", color: "#fff" },
   cardPriceSub: { fontSize: 11, color: "rgba(255,255,255,0.7)" },
+
+  footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 4, },
+  hint: { textAlign: "center", color: "#9CA3AF", fontSize: 13 },
 
   // Empty
   emptyContainer: { alignItems: "center", gap: 12, paddingVertical: 40 },
