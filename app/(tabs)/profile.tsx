@@ -1,14 +1,69 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { useState } from "react";
-import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
+import { supabase } from "@/lib/supabase";
 
 const BLUE = "#0EA5E9";
 const DARK = "#0F172A";
 
 export default function ProfileScreen() {
   const [isDark, setIsDark] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<{ name: string; email: string; avatar_url: string | null } | null>(null);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  async function fetchProfile() {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("name, avatar_url")
+          .eq("id", user.id)
+          .single();
+
+        if (error) throw error;
+
+        setProfile({
+          name: data?.name || "User",
+          email: user.email || "",
+          avatar_url: data?.avatar_url,
+        });
+      }
+    } catch (error: any) {
+      console.error("Error fetching profile:", error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    Alert.alert(
+      "Logout",
+      "Apakah Anda yakin ingin keluar?",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Keluar",
+          style: "destructive",
+          onPress: async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+              Alert.alert("Error", error.message);
+            } else {
+              router.replace("/login");
+            }
+          },
+        },
+      ]
+    );
+  }
 
   const theme = {
     bg: isDark ? "#0F172A" : "#F1F5F9",
@@ -18,6 +73,14 @@ export default function ProfileScreen() {
     divider: isDark ? "#334155" : "#F9FAFB",
     menuSub: isDark ? "#64748B" : "#9CA3AF",
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.bg, justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color={BLUE} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -37,10 +100,13 @@ export default function ProfileScreen() {
           {/* Avatar */}
           <View style={styles.avatarSection}>
             <View style={styles.avatarRing}>
-              <Image source={{ uri: "https://i.pravatar.cc/150?img=47" }} style={styles.avatar} />
+              <Image 
+                source={{ uri: profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.name}&background=random` }} 
+                style={styles.avatar} 
+              />
             </View>
-            <Text style={styles.heroName}>Otw Sarjana</Text>
-            <Text style={styles.heroEmail}>otw.sarjana@example.com</Text>
+            <Text style={styles.heroName}>{profile?.name}</Text>
+            <Text style={styles.heroEmail}>{profile?.email}</Text>
           </View>
 
           <TouchableOpacity style={styles.editBtn}>
@@ -55,7 +121,7 @@ export default function ProfileScreen() {
             <View style={[styles.statIcon, { backgroundColor: "#FEE2E2" }]}>
               <Ionicons name="heart" size={22} color="#EF4444" />
             </View>
-            <Text style={[styles.statNumber, { color: theme.text }]}>3</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
             <Text style={[styles.statLabel, { color: theme.subText }]}>Favorit</Text>
           </View>
 
@@ -65,7 +131,7 @@ export default function ProfileScreen() {
             <View style={[styles.statIcon, { backgroundColor: "#D1FAE5" }]}>
               <Ionicons name="location" size={22} color="#10B981" />
             </View>
-            <Text style={[styles.statNumber, { color: theme.text }]}>12</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
             <Text style={[styles.statLabel, { color: theme.subText }]}>Dikunjungi</Text>
           </View>
 
@@ -75,7 +141,7 @@ export default function ProfileScreen() {
             <View style={[styles.statIcon, { backgroundColor: "#EFF6FF" }]}>
               <Ionicons name="search" size={22} color={BLUE} />
             </View>
-            <Text style={[styles.statNumber, { color: theme.text }]}>45</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
             <Text style={[styles.statLabel, { color: theme.subText }]}>Pencarian</Text>
           </View>
         </View>
@@ -98,7 +164,7 @@ export default function ProfileScreen() {
 
             <View style={[styles.menuDivider, { backgroundColor: theme.divider }]} />
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
               <View style={[styles.menuIconWrap, { backgroundColor: "#FEE2E2" }]}>
                 <Ionicons name="log-out-outline" size={18} color="#EF4444" />
               </View>

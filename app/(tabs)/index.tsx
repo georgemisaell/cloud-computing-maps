@@ -69,9 +69,17 @@ export default function Index() {
     lat: number;
     lng: number;
   } | null>(null);
+  const [profile, setProfile] = useState<{ name: string; avatar_url: string | null } | null>(null);
 
   useEffect(() => {
     (async () => {
+      // 0. Fetch user profile
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.from("profiles").select("name, avatar_url").eq("id", user.id).single();
+        if (data) setProfile({ name: data.name, avatar_url: data.avatar_url });
+      }
+
       // 1. Request Permission
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
@@ -251,7 +259,7 @@ export default function Index() {
           </Text>
 
           <Image
-            source={{ uri: "https://i.pravatar.cc/150?img=47" }}
+            source={{ uri: profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.name || 'User'}&background=random` }}
             style={styles.avatarCircle}
           />
         </View>
@@ -345,7 +353,7 @@ export default function Index() {
                   selectedCategory === cat && styles.dropdownItemActive,
                 ]}
                 onPress={() => {
-                  setSelectedCategory(cat);
+                  setSelectedCategory(selectedCategory === cat ? "Semua" : cat);
                   setActiveFilter(null);
                 }}
               >
@@ -385,7 +393,7 @@ export default function Index() {
                   selectedJarak === opt.value && styles.dropdownItemActive,
                 ]}
                 onPress={() => {
-                  setSelectedJarak(opt.value);
+                  setSelectedJarak(selectedJarak === opt.value ? "none" : opt.value);
                   setActiveFilter(null);
                 }}
               >
@@ -426,7 +434,7 @@ export default function Index() {
                   selectedHarga === opt.value && styles.dropdownItemActive,
                 ]}
                 onPress={() => {
-                  setSelectedHarga(opt.value);
+                  setSelectedHarga(selectedHarga === opt.value ? "semua" : opt.value);
                   setActiveFilter(null);
                 }}
               >
@@ -485,7 +493,7 @@ export default function Index() {
                   selectedRating === n && styles.dropdownItemActive,
                 ]}
                 onPress={() => {
-                  setSelectedRating(n);
+                  setSelectedRating(selectedRating === n ? null : n);
                   setActiveFilter(null);
                 }}
               >
