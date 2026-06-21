@@ -1,16 +1,18 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  StatusBar,
-  TextInput,
-  SafeAreaView,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+import React, { useState } from "react";
+import {
+  Dimensions,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Image,
+} from "react-native";
+import MapView, { Marker, PROVIDER_DEFAULT } from "react-native-maps";
 
 const { width, height } = Dimensions.get("window");
 
@@ -23,7 +25,17 @@ export type Venue = {
   status: "Buka" | "Tutup";
   price: string;
   sport: string;
+  lat?: number;
+  lng?: number;
+  initial?: string;
+  color?: string;
+  image?: string;
 };
+
+const customMapStyle = [
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] }
+];
 
 export default function VenuePreviewScreen() {
   const params = useLocalSearchParams();
@@ -43,19 +55,28 @@ export default function VenuePreviewScreen() {
 
       {/* Map Background */}
       <View style={styles.mapBackground}>
-        <View style={styles.mapGrid}>
-          {[0.2, 0.4, 0.6, 0.8].map((x, i) => (
-            <View key={`v${i}`} style={[styles.mapLineV, { left: `${x * 100}%` }]} />
-          ))}
-          {[0.15, 0.3, 0.45, 0.6, 0.75].map((y, i) => (
-            <View key={`h${i}`} style={[styles.mapLineH, { top: `${y * 100}%` }]} />
-          ))}
-          <View style={styles.parkBlob1} />
-          <View style={styles.parkBlob2} />
-          <View style={styles.roadH1} />
-          <View style={styles.roadH2} />
-          <View style={styles.roadV1} />
-        </View>
+        {venue?.lat && venue?.lng ? (
+          <MapView
+            style={StyleSheet.absoluteFillObject}
+            provider={PROVIDER_DEFAULT}
+            showsUserLocation={true}
+            showsMyLocationButton={false}
+            showsPointsOfInterest={false}
+            customMapStyle={customMapStyle}
+            region={{
+              latitude: venue.lat,
+              longitude: venue.lng,
+              latitudeDelta: 0.0005,
+              longitudeDelta: 0.0005,
+            }}
+          >
+            <Marker coordinate={{ latitude: venue.lat, longitude: venue.lng }}>
+              <View style={[styles.venueMarker, { backgroundColor: venue.color || "#00BFA5" }]}>
+                <Text style={styles.venueMarkerText}>{venue.initial || venue.name?.charAt(0) || "-"}</Text>
+              </View>
+            </Marker>
+          </MapView>
+        ) : null}
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
@@ -77,9 +98,13 @@ export default function VenuePreviewScreen() {
         <View style={styles.card}>
           {/* Card Image Area */}
           <View style={styles.cardImageWrapper}>
-            <View style={styles.cardImage}>
-              <Text style={styles.cardImageEmoji}>🏸</Text>
-            </View>
+            {venue?.image ? (
+              <Image source={{ uri: venue.image }} style={styles.cardImage} resizeMode="cover" />
+            ) : (
+              <View style={styles.cardImage}>
+                <Text style={styles.cardImageEmoji}>🏸</Text>
+              </View>
+            )}
             <View style={styles.sportBadge}>
               <Text style={styles.sportBadgeText}>{venue?.sport ?? "-"}</Text>
             </View>
@@ -114,7 +139,7 @@ export default function VenuePreviewScreen() {
           </View>
         </View>
 
-        
+
       </View>
     </SafeAreaView>
   );
@@ -123,14 +148,8 @@ export default function VenuePreviewScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#EEF4EE" },
   mapBackground: { flex: 1, backgroundColor: "#E8F0E8", position: "relative", overflow: "hidden" },
-  mapGrid: { ...StyleSheet.absoluteFillObject },
-  mapLineV: { position: "absolute", top: 0, bottom: 0, width: 1, backgroundColor: "#D1DDD1" },
-  mapLineH: { position: "absolute", left: 0, right: 0, height: 1, backgroundColor: "#D1DDD1" },
-  parkBlob1: { position: "absolute", top: "15%", left: "30%", width: 140, height: 100, borderRadius: 50, backgroundColor: "#C5D9C0", transform: [{ rotate: "-15deg" }] },
-  parkBlob2: { position: "absolute", top: "35%", left: "10%", width: 80, height: 60, borderRadius: 30, backgroundColor: "#C5D9C0" },
-  roadH1: { position: "absolute", top: "45%", left: 0, right: 0, height: 8, backgroundColor: "#FFFFFF" },
-  roadH2: { position: "absolute", top: "25%", left: "20%", right: 0, height: 5, backgroundColor: "#FFFFFF" },
-  roadV1: { position: "absolute", left: "55%", top: 0, bottom: 0, width: 8, backgroundColor: "#FFFFFF" },
+  venueMarker: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4, borderWidth: 2, borderColor: "#FFFFFF" },
+  venueMarkerText: { color: "#FFFFFF", fontWeight: "700", fontSize: 15 },
   searchContainer: { position: "absolute", top: 16, left: 16, right: 16 },
   searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 28, paddingHorizontal: 16, paddingVertical: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 },
   searchIcon: { marginRight: 8 },
