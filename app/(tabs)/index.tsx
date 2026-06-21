@@ -341,6 +341,23 @@ export default function Index() {
           })}
         </View>
 
+        {/* Reset chip */}
+        {(selectedCategory !== "Semua" || selectedJarak !== "none" || selectedHarga !== "semua" || selectedRating !== null) && (
+          <TouchableOpacity
+            style={styles.resetChip}
+            onPress={() => {
+              setSelectedCategory("Semua");
+              setSelectedJarak("none");
+              setSelectedHarga("semua");
+              setSelectedRating(null);
+              setActiveFilter(null);
+            }}
+          >
+            <Ionicons name="close-circle" size={14} color="#6B7280" />
+            <Text style={styles.resetChipText}>Reset filter</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Dropdown Kategori */}
         {activeFilter === "kategori" && (
           <View style={styles.dropdown}>
@@ -551,9 +568,10 @@ export default function Index() {
         {/* Section title */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Rekomendasi Terdekat</Text>
-          <TouchableOpacity>
-            <Text style={styles.sectionLink}>Lihat semua</Text>
-          </TouchableOpacity>
+          <View style={styles.venueCount}>
+            <Ionicons name="location-outline" size={14} color={BLUE} />
+            <Text style={styles.venueCountText}>{filteredVenues.length} tempat ditemukan</Text>
+          </View>
         </View>
       </View>
 
@@ -644,6 +662,11 @@ export default function Index() {
             </TouchableOpacity>
           ))
         )}
+
+        <View style={styles.footerRow}>
+          <Ionicons name="information-circle-outline" size={14} color="#9CA3AF" />
+          <Text style={styles.hint}>Tap card untuk lihat detail tempat</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -673,6 +696,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   avatarText: { color: "#fff", fontWeight: "700", fontSize: 18 },
+  avatarWrapper: { justifyContent: "center", alignItems: "center" },
   greeting: { fontSize: 12, color: "#9CA3AF" },
   userName: { fontSize: 16, fontWeight: "700", color: "#111827" },
   notifBtn: {
@@ -723,6 +747,10 @@ const styles = StyleSheet.create({
   filterChipText: { fontSize: 12, color: "#374151" },
   filterChipActive: { backgroundColor: BLUE, borderColor: BLUE },
   filterChipTextActive: { color: "#fff", fontWeight: "600" },
+
+  // Reset chip
+  resetChip: { flexShrink: 1, alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#F3F4F6", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, marginBottom: 12 },
+  resetChipText: { fontSize: 12, color: "#6B7280", fontWeight: "500" },
 
   // Dropdown
   dropdown: {
@@ -786,6 +814,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 16, fontWeight: "700", color: "#111827" },
   sectionLink: { fontSize: 13, color: BLUE, fontWeight: "600" },
+  venueCount: { flexDirection: "row", alignItems: "center", gap: 4 },
+  venueCountText: { fontSize: 13, color: BLUE, fontWeight: "600" },
 
   // Card
   card: {
@@ -838,6 +868,9 @@ const styles = StyleSheet.create({
   cardPriceWrap: { alignItems: "flex-end" },
   cardPrice: { fontSize: 14, fontWeight: "800", color: "#fff" },
   cardPriceSub: { fontSize: 11, color: "rgba(255,255,255,0.7)" },
+
+  footerRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, marginTop: 4, },
+  hint: { textAlign: "center", color: "#9CA3AF", fontSize: 13 },
 
   // Empty
   emptyContainer: { alignItems: "center", gap: 12, paddingVertical: 40 },
