@@ -44,16 +44,6 @@ export default function RootLayout() {
       />
 
       <Tabs.Screen
-        name="main_bareng"
-        options={{
-          title: "Main Bareng",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "people-sharp" : "people-outline"} color={color} size={24} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="favorite"
         options={{
           title: "Favorite",
@@ -63,10 +53,14 @@ export default function RootLayout() {
         }}
       />
 
-      {/* Profile disembunyikan dari tab bar (tetap routable via href default null) */}
       <Tabs.Screen
-        name="profile"
-        options={{ href: null, headerShown: false }}
+        name="main_bareng"
+        options={{
+          title: "Main Bareng",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "people-sharp" : "people-outline"} color={color} size={24} />
+          ),
+        }}
       />
 
       {/* Tidak muncul di tab tapi dapat bottom nav otomatis */}

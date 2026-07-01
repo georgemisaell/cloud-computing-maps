@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
+import { router } from "expo-router";
 const BLUE = "#0EA5E9";
 
 const dummyFavorites = [
@@ -163,7 +163,10 @@ export default function FavoriteScreen() {
         keyExtractor={(item) => item.id}
         onScrollBeginDrag={() => setActiveFilter(null)}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push({ pathname: "/detail_tempat", params: { id: item.id } })}
+      >
             <Image source={item.image} style={styles.cardBg} resizeMode="cover" />
             <View style={styles.cardOverlay} />
 
@@ -221,7 +224,7 @@ export default function FavoriteScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB", paddingTop: 16, paddingHorizontal: 16 },
+  container: { flex: 1, backgroundColor: "#F9FAFB", paddingTop: 60, paddingHorizontal: 16 },
 
   headerBanner: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#fff", borderRadius: 16, padding: 16, marginBottom: 14, elevation: 3 },
   headerSub: { fontSize: 12, color: "#6B7280", marginBottom: 2 },
