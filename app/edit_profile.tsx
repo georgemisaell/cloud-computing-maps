@@ -177,6 +177,15 @@ export default function EditProfileScreen() {
     >
       <StatusBar barStyle="light-content" backgroundColor={DARK} />
 
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={20} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profil</Text>
+        <View style={{ width: 38 }} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Avatar */}
         <View style={styles.avatarSection}>
