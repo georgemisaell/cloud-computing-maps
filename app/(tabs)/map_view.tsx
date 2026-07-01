@@ -9,7 +9,6 @@ import {
   StatusBar,
   ActivityIndicator,
   Alert,
-  Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -159,11 +158,6 @@ export default function MapViewScreen() {
     v.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleClearSearch = () => {
-    setSearch("");
-    Keyboard.dismiss();
-  };
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -184,7 +178,6 @@ export default function MapViewScreen() {
             latitudeDelta: 0.05,
             longitudeDelta: 0.05,
           }}
-          onPress={() => Keyboard.dismiss()}
         >
           {!loading && filteredVenues.map((venue) => {
             const color = venue.category?.color || "#00BFA5";
@@ -239,18 +232,7 @@ export default function MapViewScreen() {
             placeholderTextColor="#9CA3AF"
             value={search}
             onChangeText={setSearch}
-            returnKeyType="search"
-            onSubmitEditing={Keyboard.dismiss}
           />
-          {search.length > 0 && (
-            <TouchableOpacity
-              onPress={handleClearSearch}
-              style={styles.clearButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="close-circle" size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-          )}
         </View>
       </View>
     </View>
@@ -323,5 +305,4 @@ const styles = StyleSheet.create({
   },
   searchIcon: { marginRight: 10 },
   searchInput: { flex: 1, fontSize: 15, color: "#1A1A2E" },
-  clearButton: { marginLeft: 8 },
 });

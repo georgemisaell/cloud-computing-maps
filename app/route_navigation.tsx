@@ -3,6 +3,7 @@ import * as Location from "expo-location";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Dimensions,
   Linking,
   StatusBar,
   StyleSheet,
@@ -12,6 +13,9 @@ import {
 } from "react-native";
 import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const { width, height } = Dimensions.get("window");
+const MAP_HEIGHT = height * 0.62;
 
 export default function RouteNavigationScreen() {
   const params = useLocalSearchParams();
@@ -70,13 +74,11 @@ export default function RouteNavigationScreen() {
   };
 
   return (
-    // paddingTop insets.top DIHAPUS -> header route (expo-router) udah otomatis
-    // reserve safe area di atas, jadi kalau ditambah lagi jadi dobel spacing
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" backgroundColor="#EEF4EE" translucent={false} />
 
-      {/* Map Area - pakai flex, bukan height % dari window height mentah */}
-      <View style={styles.mapContainer}>
+      {/* Map Area */}
+      <View style={[styles.mapContainer, { height: MAP_HEIGHT }]}>
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFillObject}
@@ -118,13 +120,13 @@ export default function RouteNavigationScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Bottom Sheet - paddingBottom pakai insets.bottom biar aman di device dgn home indicator */}
-      <View style={[styles.bottomSheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+      {/* Bottom Sheet */}
+      <View style={styles.bottomSheet}>
         <View style={styles.handle} />
 
         <View style={styles.etaRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.etaTime} numberOfLines={2}>{venue.name ?? "Tujuan"}</Text>
+          <View>
+            <Text style={styles.etaTime}>{venue.name ?? "Tujuan"}</Text>
             <Text style={styles.etaDetail}>
               {venue.distance ? `${venue.distance} • ` : ""}Rute langsung
             </Text>
@@ -146,20 +148,19 @@ export default function RouteNavigationScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#EEF4EE",
-  },
+  container: { flex: 1, backgroundColor: "#EEF4EE" },
 
-  // Map: flex 1.4 biar map lebih besar dari bottom sheet, tapi
-  // proporsinya relatif ke sisa layar (bukan window height mentah)
+  // Map
   mapContainer: {
-    flex: 1.4,
     width: "100%",
     backgroundColor: "#EEF4EE",
     position: "relative",
     overflow: "hidden",
   },
+
+
+
+
 
   destWrapper: {
     alignItems: "center",
@@ -199,13 +200,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1, shadowRadius: 6, elevation: 4,
   },
 
-  // Bottom Sheet: flex 1 -> ngisi sisa ruang setelah mapContainer
+  // Bottom Sheet
   bottomSheet: {
     flex: 1,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
     paddingHorizontal: 24,
     paddingTop: 14,
+    paddingBottom: 24,
     shadowColor: "#000", shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.06, shadowRadius: 10, elevation: 8,
     justifyContent: "space-between",
@@ -219,13 +221,12 @@ const styles = StyleSheet.create({
     flexDirection: "row", justifyContent: "space-between",
     alignItems: "center", marginBottom: 16,
   },
-  etaTime: { fontSize: 28, fontWeight: "800", color: "#1A1A2E", marginBottom: 2 },
+  etaTime: { fontSize: 36, fontWeight: "800", color: "#1A1A2E", marginBottom: 2 },
   etaDetail: { fontSize: 14, color: "#6B7280" },
   compassBtn: {
     width: 56, height: 56, borderRadius: 28,
     backgroundColor: "#EFF6FF",
     alignItems: "center", justifyContent: "center",
-    marginLeft: 12,
   },
   mapsButton: {
     height: 56, borderRadius: 20,

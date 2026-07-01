@@ -92,6 +92,11 @@ export default function ProfileScreen() {
           <Ionicons name="ellipse" size={300} color="rgba(14,165,233,0.07)" style={styles.bgCircle1} />
           <Ionicons name="ellipse" size={200} color="rgba(14,165,233,0.05)" style={styles.bgCircle2} />
 
+          {/* Toggle Dark/Light */}
+          <TouchableOpacity style={styles.toggleBtn} onPress={() => setIsDark(!isDark)}>
+            <Ionicons name={isDark ? "sunny-outline" : "moon-outline"} size={18} color="#fff" />
+          </TouchableOpacity>
+
           {/* Avatar */}
           <View style={styles.avatarSection}>
             <View style={styles.avatarRing}>
@@ -104,7 +109,7 @@ export default function ProfileScreen() {
             <Text style={styles.heroEmail}>{profile?.email}</Text>
           </View>
 
-          <TouchableOpacity style={styles.editBtn} onPress={() => router.push("/edit_profile")}>
+          <TouchableOpacity style={styles.editBtn}>
             <Ionicons name="pencil-outline" size={14} color={DARK} />
             <Text style={styles.editBtnText}>Edit Profil</Text>
           </TouchableOpacity>
@@ -132,14 +137,13 @@ export default function ProfileScreen() {
 
           <View style={[styles.statDivider, { backgroundColor: theme.divider }]} />
 
-          <TouchableOpacity style={styles.statCard} onPress={() => setIsDark(!isDark)}>
-            <View style={[styles.statIcon, { backgroundColor: isDark ? "#FEF3C7" : "#EEF2FF" }]}>
-              <Ionicons name={isDark ? "sunny" : "moon"} size={22} color={isDark ? "#F59E0B" : "#6366F1"} />
+          <View style={styles.statCard}>
+            <View style={[styles.statIcon, { backgroundColor: "#EFF6FF" }]}>
+              <Ionicons name="search" size={22} color={BLUE} />
             </View>
-            <Text style={[styles.statNumber, { color: theme.text, fontSize: 16, lineHeight: 28 }]}>{isDark ? "Light" : "Dark"}</Text>
-            <Text style={[styles.statLabel, { color: theme.subText }]}>Mode</Text>
-          </TouchableOpacity>
-
+            <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
+            <Text style={[styles.statLabel, { color: theme.subText }]}>Pencarian</Text>
+          </View>
         </View>
 
         {/* Menu */}
