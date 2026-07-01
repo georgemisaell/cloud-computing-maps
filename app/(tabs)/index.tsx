@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -85,14 +85,23 @@ export default function Index() {
     setSelectedRating(null);
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      async function fetchUser() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase.from("profiles").select("name, avatar_url").eq("id", user.id).single();
+          if (data) setProfile({ name: data.name, avatar_url: data.avatar_url });
+        } else {
+          setProfile(null);
+        }
+      }
+      fetchUser();
+    }, [])
+  );
+
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase.from("profiles").select("name, avatar_url").eq("id", user.id).single();
-        if (data) setProfile({ name: data.name, avatar_url: data.avatar_url });
-      }
-
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         Alert.alert("Izin Ditolak", "Aplikasi membutuhkan izin lokasi untuk menghitung jarak ke tempat olahraga.");

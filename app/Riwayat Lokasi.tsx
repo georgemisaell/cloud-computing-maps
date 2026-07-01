@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React from "react";
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import React, { useState, useCallback } from "react";
+import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { supabase } from "@/lib/supabase";
+import LoginPrompt from "@/components/LoginPrompt";
 
 const BLUE = "#0EA5E9";
 
@@ -20,6 +22,43 @@ const iconMap: Record<string, string> = {
 };
 
 export default function HistoryScreen() {
+  const [session, setSession] = useState<any>(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      const checkSession = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (isActive) {
+          setSession(data.session);
+          setLoadingSession(false);
+        }
+      };
+      checkSession();
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
+  if (loadingSession) {
+    return (
+      <View style={[styles.container, { justifyContent: "center", backgroundColor: "#0F172A" }]}>
+        <ActivityIndicator size="large" color={BLUE} />
+      </View>
+    );
+  }
+
+  if (!session) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#0F172A" }}>
+        <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+        <LoginPrompt message="Silakan login untuk melihat riwayat lokasi Anda." />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0F172A" />

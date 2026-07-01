@@ -1,31 +1,181 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { router } from "expo-router";
+import React, { useState, useCallback, useEffect } from 'react';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { supabase } from "@/lib/supabase";
+import LoginPrompt from "@/components/LoginPrompt";
+import * as Location from "expo-location";
 const BLUE = "#0EA5E9";
 
-const dummyFavorites = [
-  { id: "1", name: "Padel Surabaya Barat", type: "Padel", distance: "0.8 km", status: "Buka", price: "Rp 60K–80K/jam", rating: 5,
-    image: { uri: "https://www.lalamove.com/hs-fs/hubfs/undefined-Jan-12-2026-04-50-53-3859-AM.jpeg?width=500&height=281&name=undefined-Jan-12-2026-04-50-53-3859-AM.jpeg" }
-  },
-  { id: "2", name: "GOR Arcadia", type: "Badminton", distance: "1.2 km", status: "Buka", price: "Rp 25K–40K/jam", rating: 4,
-    image: { uri: "https://admin.saraga.id/storage/images/1_1707477144.jpeg" }
-  },
-  { id: "3", name: "Basket Kenjeran", type: "Basket", distance: "2.5 km", status: "Tutup", price: "Gratis", rating: 4,
-    image: { uri: "https://berqwp-cdn.sfo3.cdn.digitaloceanspaces.com/cache/thegrandkenjeran.com/wp-content/uploads/2025/02/W-Arena-Basketball-Court-p2-jpg.webp?bwp" }
-  },
-];
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export default function FavoriteScreen() {
-  const [favorites, setFavorites] = useState(dummyFavorites);
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [activeFilter, setActiveFilter] = useState<"kategori" | "rating" | null>(null);
 
   const categories = ["Semua", "Padel", "Badminton", "Basket"];
 
-  const handleDelete = (id: string) => {
-    setFavorites((prev) => prev.filter((item) => item.id !== id));
+  const [session, setSession] = useState<any>(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setUserLocation({ lat: -7.2575, lng: 112.7521 });
+      } else {
+        try {
+          let location = await Location.getCurrentPositionAsync({});
+          setUserLocation({ lat: location.coords.latitude, lng: location.coords.longitude });
+        } catch {
+          setUserLocation({ lat: -7.2575, lng: 112.7521 });
+        }
+      }
+    })();
+  }, []);
+
+  const fetchFavorites = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('favorites')
+        .select(`
+          id,
+          place_id,
+          places (
+            id,
+            name,
+            lat,
+            lng,
+            price_min,
+            price_max,
+            categories(name),
+            place_images(image_url, is_primary),
+            operating_hours(day_of_week, open_time, close_time, is_closed),
+            reviews(rating)
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      if (data) {
+        const now = new Date();
+        const currentDay = now.getDay();
+        const currentTime = now.getHours() * 100 + now.getMinutes();
+
+        const formatted = data.map((fav: any) => {
+          const place = fav.places;
+          if (!place) return null;
+
+          const category = Array.isArray(place.categories) ? place.categories[0]?.name : (place.categories?.name || "Uncategorized");
+          
+          let status = "Tutup";
+          const todayHours = place.operating_hours?.find((h: any) => h.day_of_week === currentDay);
+          if (todayHours && !todayHours.is_closed) {
+            const open = todayHours.open_time ? parseInt(todayHours.open_time.replace(/:/g, "")) : 0;
+            const close = todayHours.close_time ? parseInt(todayHours.close_time.replace(/:/g, "")) : 0;
+            if (currentTime >= open && currentTime <= close) status = "Buka";
+          }
+
+          let distanceStr = "-";
+          if (userLocation && place.lat && place.lng) {
+            distanceStr = getDistance(userLocation.lat, userLocation.lng, place.lat, place.lng).toFixed(1) + " km";
+          }
+
+          const reviews = place.reviews || [];
+          const avgRating = reviews.length > 0
+            ? Math.round(reviews.reduce((acc: number, curr: any) => acc + curr.rating, 0) / reviews.length)
+            : 0;
+
+          const primaryImg = place.place_images?.find((img: any) => img.is_primary)?.image_url 
+            || place.place_images?.[0]?.image_url
+            || "https://via.placeholder.com/150";
+
+          const priceStr = (place.price_min && place.price_max)
+            ? `Rp ${(place.price_min/1000)}K–${(place.price_max/1000)}K`
+            : "Gratis";
+
+          return {
+            id: place.id,
+            fav_id: fav.id, // we might need this for deletion
+            name: place.name,
+            type: category,
+            distance: distanceStr,
+            status: status,
+            price: priceStr,
+            rating: avgRating,
+            image: { uri: primaryImg }
+          };
+        }).filter(Boolean);
+
+        setFavorites(formatted);
+      }
+    } catch (err) {
+      console.error("Error fetching favorites:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userLocation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+      const checkSession = async () => {
+        const { data } = await supabase.auth.getSession();
+        if (isActive) {
+          setSession(data.session);
+          setLoadingSession(false);
+          if (data.session) {
+            fetchFavorites();
+          } else {
+            setFavorites([]);
+          }
+        }
+      };
+      checkSession();
+      return () => {
+        isActive = false;
+      };
+    }, [fetchFavorites])
+  );
+
+  const handleDelete = async (placeId: string) => {
+    try {
+      setFavorites((prev) => prev.filter((item) => item.id !== placeId));
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
+      await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('place_id', placeId);
+    } catch (err) {
+      console.error("Failed to delete favorite:", err);
+      fetchFavorites(); // reload on error
+    }
   };
 
   const filteredFavorites = favorites.filter((item) => {
@@ -38,6 +188,18 @@ export default function FavoriteScreen() {
     Array.from({ length: 5 }, (_, i) => (
       <Ionicons key={i} name={i < rating ? "star" : "star-outline"} size={11} color={i < rating ? "#F59E0B" : "rgba(255,255,255,0.4)"} />
     ));
+
+  if (loadingSession || (session && loading && !favorites.length)) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color={BLUE} />
+      </View>
+    );
+  }
+
+  if (!session) {
+    return <LoginPrompt message="Silakan login untuk melihat daftar tempat favorit Anda." />;
+  }
 
   return (
     <View style={styles.container}>

@@ -7,6 +7,7 @@ import {
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "@/lib/supabase";
+import { decode } from "base64-arraybuffer";
 
 const BLUE = "#0EA5E9";
 const DARK = "#0F172A";
@@ -65,29 +66,31 @@ export default function EditProfileScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
+      base64: true,
     });
 
     if (!result.canceled && result.assets[0]) {
-      await uploadAvatar(result.assets[0].uri);
+      const asset = result.assets[0];
+      if (asset.base64) {
+        await uploadAvatar(asset.uri, asset.base64);
+      } else {
+        Alert.alert("Error", "Gagal membaca file gambar.");
+      }
     }
   }
 
-  async function uploadAvatar(uri: string) {
+  async function uploadAvatar(uri: string, base64Str: string) {
     if (!userId) return;
     try {
       setUploading(true);
 
-      const response = await fetch(uri);
-      const blob = await response.blob();
       const fileExt = uri.split(".").pop() || "jpg";
       const fileName = `${userId}/avatar_${Date.now()}.${fileExt}`;
 
-      const arrayBuffer = await new Response(blob).arrayBuffer();
-
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, arrayBuffer, {
-          contentType: blob.type || "image/jpeg",
+        .upload(fileName, decode(base64Str), {
+          contentType: "image/jpeg",
           upsert: true,
         });
 
@@ -95,6 +98,17 @@ export default function EditProfileScreen() {
 
       const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
       setAvatarUrl(data.publicUrl);
+
+      // Auto-simpan URL avatar langsung ke tabel profiles agar tidak hilang saat back
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: data.publicUrl })
+        .eq("id", userId);
+      
+      if (profileError) {
+        console.error("Gagal auto-save avatar_url:", profileError);
+      }
+
     } catch (error: any) {
       Alert.alert("Error", "Gagal upload foto: " + error.message);
     } finally {

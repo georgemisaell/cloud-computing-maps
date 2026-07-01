@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   NativeScrollEvent,
@@ -492,11 +493,71 @@ export default function VenueDetailScreen() {
     }
   }, [venueId]);
 
+  const checkFavoriteStatus = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("place_id", venueId)
+        .single();
+      
+      if (data) setIsFavorited(true);
+    } catch (err) {
+      // Ignore error if no rows found
+    }
+  }, [venueId]);
+
   useEffect(() => {
     if (venueId) {
       fetchVenueDetail();
+      checkFavoriteStatus();
     }
-  }, [venueId, fetchVenueDetail]);
+  }, [venueId, fetchVenueDetail, checkFavoriteStatus]);
+
+  const toggleFavorite = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      Alert.alert("Login Diperlukan", "Silakan login terlebih dahulu untuk menambahkan tempat ini ke favorit.");
+      return;
+    }
+
+    try {
+      if (isFavorited) {
+        setIsFavorited(false);
+        const { error } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("place_id", venueId);
+        
+        if (error) {
+          console.error("Delete favorite error:", error);
+          Alert.alert("Error", "Gagal menghapus dari favorit: " + error.message);
+          setIsFavorited(true); // rollback
+        }
+      } else {
+        setIsFavorited(true);
+        const { error } = await supabase
+          .from("favorites")
+          .insert({ user_id: user.id, place_id: venueId });
+        
+        if (error) {
+          console.error("Insert favorite error:", error);
+          Alert.alert("Error", "Gagal menambahkan ke favorit: " + error.message);
+          setIsFavorited(false); // rollback
+        }
+      }
+    } catch (err: any) {
+      console.error("Failed to toggle favorite:", err);
+      Alert.alert("Error", "Terjadi kesalahan sistem: " + err.message);
+      // rollback UI state on error
+      setIsFavorited(!isFavorited);
+    }
+  };
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
     setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH));
@@ -571,7 +632,7 @@ export default function VenueDetailScreen() {
 
           <TouchableOpacity
             style={styles.overlayBtnRight}
-            onPress={() => setIsFavorited((v) => !v)}
+            onPress={toggleFavorite}
           >
             <IconHeart size={20} filled={isFavorited} />
           </TouchableOpacity>
@@ -666,7 +727,7 @@ export default function VenueDetailScreen() {
       <View style={styles.stickyBar}>
         <TouchableOpacity
           style={[styles.heartButton, isFavorited && styles.heartButtonActive]}
-          onPress={() => setIsFavorited((v) => !v)}
+          onPress={toggleFavorite}
         >
           {Svg ? (
             <Svg
