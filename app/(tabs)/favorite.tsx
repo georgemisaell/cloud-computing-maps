@@ -1,10 +1,10 @@
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState, useCallback, useEffect } from 'react';
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
-import { router, useFocusEffect } from "expo-router";
-import { supabase } from "@/lib/supabase";
 import LoginPrompt from "@/components/LoginPrompt";
+import { supabase } from "@/lib/supabase";
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 const BLUE = "#0EA5E9";
 
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -14,9 +14,9 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -89,7 +89,7 @@ export default function FavoriteScreen() {
           if (!place) return null;
 
           const category = Array.isArray(place.categories) ? place.categories[0]?.name : (place.categories?.name || "Uncategorized");
-          
+
           let status = "Tutup";
           const todayHours = place.operating_hours?.find((h: any) => h.day_of_week === currentDay);
           if (todayHours && !todayHours.is_closed) {
@@ -108,12 +108,12 @@ export default function FavoriteScreen() {
             ? Math.round(reviews.reduce((acc: number, curr: any) => acc + curr.rating, 0) / reviews.length)
             : 0;
 
-          const primaryImg = place.place_images?.find((img: any) => img.is_primary)?.image_url 
+          const primaryImg = place.place_images?.find((img: any) => img.is_primary)?.image_url
             || place.place_images?.[0]?.image_url
             || "https://via.placeholder.com/150";
 
           const priceStr = (place.price_min && place.price_max)
-            ? `Rp ${(place.price_min/1000)}K–${(place.price_max/1000)}K`
+            ? `Rp ${(place.price_min / 1000)}K–${(place.price_max / 1000)}K`
             : "Gratis";
 
           return {
@@ -163,10 +163,10 @@ export default function FavoriteScreen() {
   const handleDelete = async (placeId: string) => {
     try {
       setFavorites((prev) => prev.filter((item) => item.id !== placeId));
-      
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      
+
       await supabase
         .from('favorites')
         .delete()
@@ -305,8 +305,8 @@ export default function FavoriteScreen() {
             {selectedCategory !== "Semua" && selectedRating !== null
               ? `${selectedCategory} • Rating ${selectedRating}★ ke atas`
               : selectedCategory !== "Semua"
-              ? `Kategori: ${selectedCategory}`
-              : `Rating ${selectedRating}★ ke atas`}
+                ? `Kategori: ${selectedCategory}`
+                : `Rating ${selectedRating}★ ke atas`}
           </Text>
         </View>
       )}
@@ -325,10 +325,10 @@ export default function FavoriteScreen() {
         keyExtractor={(item) => item.id}
         onScrollBeginDrag={() => setActiveFilter(null)}
         renderItem={({ item }) => (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push({ pathname: "/detail_tempat", params: { id: item.id } })}
-      >
+          <TouchableOpacity
+            style={styles.card}
+            onPress={() => router.push({ pathname: "/detail_tempat", params: { id: item.id } })}
+          >
             <Image source={item.image} style={styles.cardBg} resizeMode="cover" />
             <View style={styles.cardOverlay} />
 
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   cardOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.35)" },
   cardBadgeWrap: { position: "absolute", top: 12, left: 12, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   cardBadge: { fontSize: 11, fontWeight: "700", color: "#fff" },
-cardStatusWrap: { position: "absolute", top: 44, left: 12, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  cardStatusWrap: { position: "absolute", top: 44, left: 12, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   cardStatusText: { fontSize: 11, fontWeight: "700" },
   cardBottom: { position: "absolute", bottom: 0, left: 0, right: 0, padding: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" },
   cardBottomLeft: { flex: 1, gap: 4 },

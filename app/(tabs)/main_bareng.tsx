@@ -1,9 +1,9 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useFocusEffect } from "expo-router";
-import React, { useState, useCallback, useEffect } from "react";
-import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Image } from "react-native";
-import { supabase } from "@/lib/supabase";
 import LoginPrompt from "@/components/LoginPrompt";
+import { supabase } from "@/lib/supabase";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
+import { ActivityIndicator, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const BLUE = "#2563EB";
 
@@ -41,10 +41,10 @@ export default function MainBarengScreen() {
   const [selectedCat, setSelectedCat] = useState("Semua");
   const [session, setSession] = useState<any>(null);
   const [loadingSession, setLoadingSession] = useState(true);
-  
+
   const [ajakanList, setAjakanList] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
-  
+
   const [userProfile, setUserProfile] = useState<any>(null);
 
   useFocusEffect(
@@ -53,15 +53,15 @@ export default function MainBarengScreen() {
       const fetchAll = async () => {
         setLoadingSession(true);
         const { data: authData } = await supabase.auth.getSession();
-        
+
         if (isActive) {
           setSession(authData.session);
-          
+
           if (authData.session) {
             // Fetch current user profile for header avatar
             const { data: profile } = await supabase.from("profiles").select("name, avatar_url").eq("id", authData.session.user.id).single();
             setUserProfile(profile);
-            
+
             // Fetch ajakan list
             const { data: list, error } = await supabase
               .from("ajakan")
@@ -72,12 +72,12 @@ export default function MainBarengScreen() {
                 ajakan_peserta(count)
               `)
               .order("created_at", { ascending: false });
-              
+
             if (!error && list) {
               setAjakanList(list);
             }
           }
-          
+
           setLoadingSession(false);
           setLoadingData(false);
         }
@@ -164,7 +164,7 @@ export default function MainBarengScreen() {
           const joinedCount = item.ajakan_peserta[0]?.count || 0;
           const jamMulai = item.jam_mulai.substring(0, 5);
           const jamSelesai = item.jam_selesai.substring(0, 5);
-          
+
           return (
             <TouchableOpacity
               activeOpacity={0.9}

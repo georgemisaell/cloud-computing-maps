@@ -1,8 +1,8 @@
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Linking, Image } from "react-native";
-import { supabase } from "@/lib/supabase";
+import { ActivityIndicator, Alert, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const BLUE = "#2563EB";
 
@@ -18,17 +18,17 @@ function formatDate(dateStr: string) {
 export default function DetailAjakanScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
-  
+
   const [ajakan, setAjakan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
-  
+
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     async function fetchData() {
       if (!id) return;
-      
+
       const { data: authData } = await supabase.auth.getUser();
       setCurrentUser(authData.user);
 
@@ -45,7 +45,7 @@ export default function DetailAjakanScreen() {
         `)
         .eq("id", id)
         .single();
-        
+
       if (data) {
         setAjakan(data);
       } else if (error) {
@@ -54,7 +54,7 @@ export default function DetailAjakanScreen() {
       }
       setLoading(false);
     }
-    
+
     fetchData();
   }, [id]);
 
@@ -63,7 +63,7 @@ export default function DetailAjakanScreen() {
       Alert.alert("Login Dibutuhkan", "Silakan login untuk bergabung.");
       return;
     }
-    
+
     setJoining(true);
     try {
       const { error } = await supabase
@@ -73,7 +73,7 @@ export default function DetailAjakanScreen() {
           user_id: currentUser.id,
           is_host: false,
         });
-        
+
       if (error) {
         if (error.code === '23505') { // unique violation
           Alert.alert("Info", "Anda sudah bergabung dalam ajakan ini.");
@@ -82,10 +82,10 @@ export default function DetailAjakanScreen() {
         }
       } else {
         Alert.alert("Berhasil", "Anda telah bergabung!");
-        
+
         // Refresh participants locally to avoid extra fetch
         const { data: myProfile } = await supabase.from("profiles").select("name, avatar_url").eq("id", currentUser.id).single();
-        
+
         setAjakan((prev: any) => ({
           ...prev,
           participants: [
@@ -119,9 +119,9 @@ export default function DetailAjakanScreen() {
   const handleDelete = () => {
     Alert.alert("Hapus Ajakan", "Apakah Anda yakin ingin menghapus ajakan ini?", [
       { text: "Batal", style: "cancel" },
-      { 
-        text: "Hapus", 
-        style: "destructive", 
+      {
+        text: "Hapus",
+        style: "destructive",
         onPress: async () => {
           try {
             setLoading(true);
@@ -156,7 +156,7 @@ export default function DetailAjakanScreen() {
 
   const joinedCount = ajakan.participants?.length || 0;
   const sisa = ajakan.kuota - joinedCount;
-  
+
   const isJoined = ajakan.participants?.some((p: any) => p.user_id === currentUser?.id);
   const isHost = ajakan.participants?.some((p: any) => p.user_id === currentUser?.id && p.is_host);
   const isFull = sisa <= 0;
@@ -191,7 +191,7 @@ export default function DetailAjakanScreen() {
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoText}>
-              📅 {formatDate(ajakan.tanggal)} • {ajakan.jam_mulai.substring(0,5)} - {ajakan.jam_selesai.substring(0,5)} WIB
+              📅 {formatDate(ajakan.tanggal)} • {ajakan.jam_mulai.substring(0, 5)} - {ajakan.jam_selesai.substring(0, 5)} WIB
             </Text>
           </View>
           <View style={styles.infoRow}>
@@ -253,7 +253,7 @@ export default function DetailAjakanScreen() {
             </Text>
           )}
         </TouchableOpacity>
-        
+
         {/* Only show WA button if joined, OR if it's open for everyone, but usually for participants only */}
         {(isJoined && ajakan.wa_link) ? (
           <TouchableOpacity
