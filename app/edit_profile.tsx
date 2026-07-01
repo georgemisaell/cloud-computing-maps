@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, Image, ScrollView,
-  StatusBar, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  StatusBar, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Linking
 } from "react-native";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -57,7 +57,14 @@ export default function EditProfileScreen() {
   async function pickImage() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Izin dibutuhkan", "Aplikasi butuh akses galeri untuk mengganti foto profil.");
+      Alert.alert(
+        "Izin dibutuhkan", 
+        "Aplikasi butuh akses galeri untuk mengganti foto profil. Izinkan melalui Pengaturan HP Anda.",
+        [
+          { text: "Batal", style: "cancel" },
+          { text: "Buka Pengaturan", onPress: () => Linking.openSettings() }
+        ]
+      );
       return;
     }
 
