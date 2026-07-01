@@ -39,7 +39,13 @@
           }
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplikasi ini memerlukan akses ke galeri foto Anda untuk mengatur foto profil."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
