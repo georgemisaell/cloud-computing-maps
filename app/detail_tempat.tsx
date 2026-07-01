@@ -7,6 +7,7 @@ import {
   Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -61,8 +62,6 @@ type VenueDetail = {
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const IMAGE_HEIGHT = 280;
-// Seberapa jauh card "naik" menutupi bagian bawah gambar saat pertama render
-const CARD_OVERLAP = 24;
 
 const formatRupiah = (n: number) =>
   "Rp " + n.toLocaleString("id-ID").replace(/,/g, ".");
@@ -507,7 +506,7 @@ export default function VenueDetailScreen() {
       <View
         style={[
           styles.safeArea,
-          { justifyContent: "center", alignItems: "center" },
+          { justifyContent: "center", alignItems: "center", paddingTop: insets.top },
         ]}
       >
         <ActivityIndicator size="large" color="#0EA5E9" />
@@ -520,7 +519,7 @@ export default function VenueDetailScreen() {
       <View
         style={[
           styles.safeArea,
-          { justifyContent: "center", alignItems: "center" },
+          { justifyContent: "center", alignItems: "center", paddingTop: insets.top },
         ]}
       >
         <Text>Tempat tidak ditemukan.</Text>
@@ -532,69 +531,62 @@ export default function VenueDetailScreen() {
   }
 
   return (
-    // paddingTop insets.top DIHAPUS -> header (tabs)/"Detail Tempat" dari
-    // expo-router udah otomatis reserve safe area di atas. Kalau ditambah
-    // lagi jadi dobel spacing dan hasilnya beda-beda tiap device (tergantung
-    // besar notch/status bar tiap HP)
-    <View style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <StatusBar
         barStyle="dark-content"
         translucent={false}
         backgroundColor="#FFFFFF"
       />
 
-      {/* ── Banner: FIXED, gak ikut scroll ── */}
-      <View style={styles.carouselContainer}>
-        <ScrollView
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          style={{ width: SCREEN_WIDTH, height: IMAGE_HEIGHT }}
-        >
-          {venue.images.length > 0 ? (
-            venue.images.map((item, i) => (
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* ── Carousel ── */}
+        <View style={styles.carouselContainer}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            style={{ width: SCREEN_WIDTH, height: IMAGE_HEIGHT }}
+          >
+            {venue.images.length > 0 ? (
+              venue.images.map((item, i) => (
+                <Image
+                  key={i}
+                  source={{ uri: item }}
+                  style={styles.carouselImage}
+                  resizeMode="cover"
+                />
+              ))
+            ) : (
               <Image
-                key={i}
-                source={{ uri: item }}
+                source={{ uri: "https://via.placeholder.com/500" }}
                 style={styles.carouselImage}
                 resizeMode="cover"
               />
-            ))
-          ) : (
-            <Image
-              source={{ uri: "https://via.placeholder.com/500" }}
-              style={styles.carouselImage}
-              resizeMode="cover"
-            />
-          )}
-        </ScrollView>
+            )}
+          </ScrollView>
 
-        <TouchableOpacity
-          style={styles.overlayBtnRight}
-          onPress={() => setIsFavorited((v) => !v)}
-        >
-          <IconHeart size={20} filled={isFavorited} />
-        </TouchableOpacity>
 
-        <View style={styles.dotRow}>
-          {venue.images.map((_, i) => (
-            <View
-              key={i}
-              style={[styles.dot, i === activeIndex && styles.dotActive]}
-            />
-          ))}
+
+          <TouchableOpacity
+            style={styles.overlayBtnRight}
+            onPress={() => setIsFavorited((v) => !v)}
+          >
+            <IconHeart size={20} filled={isFavorited} />
+          </TouchableOpacity>
+
+          <View style={styles.dotRow}>
+            {venue.images.map((_, i) => (
+              <View
+                key={i}
+                style={[styles.dot, i === activeIndex && styles.dotActive]}
+              />
+            ))}
+          </View>
         </View>
-      </View>
 
-      {/* ── Konten: scroll, transparan di atas biar keliatan banner-nya,
-           lalu "naik" nutupin banner pas discroll ── */}
-      <ScrollView
-        style={styles.scrollOverlay}
-        contentContainerStyle={{ paddingTop: IMAGE_HEIGHT - CARD_OVERLAP }}
-        showsVerticalScrollIndicator={false}
-      >
+        {/* ── Content Card ── */}
         <View style={styles.contentCard}>
           <View style={styles.badgeRatingRow}>
             <View style={styles.categoryBadge}>
@@ -716,31 +708,11 @@ export default function VenueDetailScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1, backgroundColor: "#F5F6FA" },
 
-  // Banner tetap (fixed) di belakang, gak ikut scroll
-  carouselContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: IMAGE_HEIGHT,
-    zIndex: 0,
-  },
+  carouselContainer: { width: SCREEN_WIDTH, height: IMAGE_HEIGHT },
   carouselImage: { width: SCREEN_WIDTH, height: IMAGE_HEIGHT },
 
-  // ScrollView konten: menutupi seluruh layar, tapi bagian atasnya transparan
-  // (lewat paddingTop di contentContainerStyle) sehingga banner di belakang
-  // kelihatan. Begitu discroll, area transparan ini ikut "naik" dan card-nya
-  // otomatis menutupi banner.
-  scrollOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1,
-    backgroundColor: "transparent",
-  },
 
   overlayBtnRight: {
     position: "absolute",
@@ -776,9 +748,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    marginTop: -20,
     paddingHorizontal: 20,
     paddingTop: 24,
-    minHeight: Dimensions.get("window").height, // biar background putihnya nutup penuh walau konten pendek
   },
 
   badgeRatingRow: {
@@ -912,7 +884,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 10,
-    zIndex: 2,
   },
   heartButton: {
     width: 50,

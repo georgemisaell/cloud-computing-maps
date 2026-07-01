@@ -54,6 +54,8 @@ export default function RootLayout() {
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="detail_tempat" options={{ title: "Detail Tempat" }} />
+      <Stack.Screen name="buat_ajakan" options={{ headerShown: false }} />
+      <Stack.Screen name="detail_ajakan" options={{ headerShown: false }} />
       <Stack.Screen name="map_view" options={{ headerShown: false }} />
       <Stack.Screen name="venue_preview" options={{ headerShown: false }} />
     </Stack>
