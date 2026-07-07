@@ -75,7 +75,7 @@ export default function Login() {
         <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
           <Ionicons name="close" size={24} color="#6B7280" />
         </TouchableOpacity>
-        <Text style={styles.title}>{isSignUp ? "Daftar Akun" : "Login ke CC-Maps"}</Text>
+        <Text style={styles.title}>{isSignUp ? "Daftar Akun" : "Login ke SPORT FINDER"}</Text>
         <Text style={styles.subtitle}>
           {isSignUp ? "Lengkapi data untuk mendaftar" : "Silakan masuk untuk melanjutkan"}
         </Text>

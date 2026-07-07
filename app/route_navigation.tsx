@@ -1,10 +1,12 @@
+import React, { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Dimensions,
   Linking,
+  PanResponder,
   StatusBar,
   StyleSheet,
   Text,
@@ -15,7 +17,6 @@ import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
-const MAP_HEIGHT = height * 0.62;
 
 export default function RouteNavigationScreen() {
   const params = useLocalSearchParams();
@@ -29,6 +30,40 @@ export default function RouteNavigationScreen() {
 
   const destLat = venue.lat ?? venue.latitude ?? -7.2575;
   const destLng = venue.lng ?? venue.longitude ?? 112.7521;
+
+  const panY = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dy) > 10;
+      },
+      onPanResponderMove: (e, gestureState) => {
+        let newY = gestureState.dy;
+        if (newY < -100) newY = -100;
+        if (newY > 200) newY = 200;
+        panY.setValue(newY);
+      },
+      onPanResponderRelease: (e, gestureState) => {
+        if (gestureState.dy > 50) {
+          Animated.spring(panY, {
+            toValue: 150,
+            useNativeDriver: true,
+          }).start();
+        } else if (gestureState.dy < -50) {
+          Animated.spring(panY, {
+            toValue: -100,
+            useNativeDriver: true,
+          }).start();
+        } else {
+          Animated.spring(panY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     (async () => {
@@ -102,7 +137,7 @@ export default function RouteNavigationScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#EEF4EE" translucent={false} />
 
       {/* Map Area */}
-      <View style={[styles.mapContainer, { height: MAP_HEIGHT }]}>
+      <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFillObject}
@@ -138,8 +173,15 @@ export default function RouteNavigationScreen() {
       </View>
 
       {/* Bottom Sheet */}
-      <View style={[styles.bottomSheet, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
-        <View style={styles.handle} />
+      <Animated.View 
+        style={[
+          styles.bottomSheet, 
+          { paddingBottom: Math.max(insets.bottom + 12, 24), transform: [{ translateY: panY }] }
+        ]}
+      >
+        <View style={styles.handleContainer} {...panResponder.panHandlers}>
+          <View style={styles.handle} />
+        </View>
 
         <View style={styles.etaRow}>
           <View>
@@ -159,7 +201,7 @@ export default function RouteNavigationScreen() {
         </TouchableOpacity>
 
         <Text style={styles.hint}>Akan membuka aplikasi peta eksternal</Text>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -169,10 +211,8 @@ const styles = StyleSheet.create({
 
   // Map
   mapContainer: {
-    width: "100%",
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "#EEF4EE",
-    position: "relative",
-    overflow: "hidden",
   },
 
 
@@ -212,7 +252,8 @@ const styles = StyleSheet.create({
 
   // Bottom Sheet
   bottomSheet: {
-    flex: 1,
+    position: "absolute",
+    bottom: 0, left: 0, right: 0,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
     paddingHorizontal: 24,
@@ -221,10 +262,14 @@ const styles = StyleSheet.create({
     shadowColor: "#000", shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.06, shadowRadius: 10, elevation: 8,
   },
+  handleContainer: {
+    width: "100%",
+    paddingVertical: 10,
+    alignItems: "center",
+  },
   handle: {
     width: 40, height: 4, borderRadius: 2,
     backgroundColor: "#E5E7EB",
-    alignSelf: "center", marginBottom: 16,
   },
   etaRow: {
     flexDirection: "row", justifyContent: "space-between",

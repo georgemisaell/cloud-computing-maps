@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "cc-maps",
-    "slug": "cc-maps",
+    "name": "SPORT FINDER",
+    "slug": "georgemisael",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.sportfinder.ccmaps",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -44,6 +45,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1081fa06-53c8-4df0-886f-333474a6290e"
+      }
+    },
+    "owner": "georgemisael"
   }
 }

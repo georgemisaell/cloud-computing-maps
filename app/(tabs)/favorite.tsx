@@ -112,9 +112,9 @@ export default function FavoriteScreen() {
             || place.place_images?.[0]?.image_url
             || "https://via.placeholder.com/150";
 
-          const priceStr = (place.price_min && place.price_max)
+          const priceStr = (place.price_min != null && place.price_max != null)
             ? `Rp ${(place.price_min / 1000)}K–${(place.price_max / 1000)}K`
-            : "Gratis";
+            : "Free";
 
           return {
             id: place.id,

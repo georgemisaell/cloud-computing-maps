@@ -56,6 +56,8 @@ export default function RootLayout() {
       <Stack.Screen name="buat_ajakan" options={{ headerShown: false }} />
       <Stack.Screen name="detail_ajakan" options={{ headerShown: false }} />
       <Stack.Screen name="edit_profile" options={{ headerShown: false }} />
+      <Stack.Screen name="profile" options={{ title: "Profile" }} />
+      <Stack.Screen name="route_navigation" options={{ title: "Route Navigation" }} />
     </Stack>
   );
 }

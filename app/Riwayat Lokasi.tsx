@@ -7,14 +7,6 @@ import LoginPrompt from "@/components/LoginPrompt";
 
 const BLUE = "#0EA5E9";
 
-const dummyHistory = [
-  { id: "1", name: "Padel Surabaya Barat", type: "Padel", date: "Hari ini, 08.00", distance: "0.8 km", status: "Buka" },
-  { id: "2", name: "GOR Arcadia", type: "Badminton", date: "Kemarin, 14.30", distance: "1.2 km", status: "Buka" },
-  { id: "3", name: "Basket Kenjeran", type: "Basket", date: "2 hari lalu, 10.00", distance: "2.5 km", status: "Tutup" },
-  { id: "4", name: "Padel Surabaya Barat", type: "Padel", date: "3 hari lalu, 09.00", distance: "0.8 km", status: "Buka" },
-  { id: "5", name: "GOR Arcadia", type: "Badminton", date: "5 hari lalu, 16.00", distance: "1.2 km", status: "Buka" },
-];
-
 const iconMap: Record<string, string> = {
   Padel: "tennisball-outline",
   Badminton: "people-outline",
@@ -23,26 +15,60 @@ const iconMap: Record<string, string> = {
 
 export default function HistoryScreen() {
   const [session, setSession] = useState<any>(null);
-  const [loadingSession, setLoadingSession] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [historyList, setHistoryList] = useState<any[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-      const checkSession = async () => {
-        const { data } = await supabase.auth.getSession();
+      const fetchHistory = async () => {
+        setLoading(true);
+        const { data: authData } = await supabase.auth.getSession();
+        const sess = authData.session;
         if (isActive) {
-          setSession(data.session);
-          setLoadingSession(false);
+          setSession(sess);
+        }
+
+        if (sess) {
+          const { data, error } = await supabase
+            .from("user_route_history")
+            .select(`
+              id,
+              created_at,
+              places (
+                id,
+                name,
+                address,
+                lat,
+                lng,
+                categories (
+                  name
+                )
+              )
+            `)
+            .eq("user_id", sess.user.id)
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            console.error("Error fetching history:", error);
+          } else if (isActive) {
+            setHistoryList(data || []);
+          }
+        }
+        if (isActive) {
+          setLoading(false);
         }
       };
-      checkSession();
+      
+      fetchHistory();
+      
       return () => {
         isActive = false;
       };
     }, [])
   );
 
-  if (loadingSession) {
+  if (loading) {
     return (
       <View style={[styles.container, { justifyContent: "center", backgroundColor: "#0F172A" }]}>
         <ActivityIndicator size="large" color={BLUE} />
@@ -54,10 +80,21 @@ export default function HistoryScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: "#0F172A" }}>
         <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
-        <LoginPrompt message="Silakan login untuk melihat riwayat lokasi Anda." />
+        <LoginPrompt message="Silakan login untuk melihat riwayat rute Anda." />
       </View>
     );
   }
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -68,35 +105,54 @@ export default function HistoryScreen() {
         {/* Info */}
         <View style={styles.infoBanner}>
           <Ionicons name="information-circle-outline" size={16} color={BLUE} />
-          <Text style={styles.infoText}>Menampilkan 5 lokasi terakhir yang dikunjungi</Text>
+          <Text style={styles.infoText}>Menampilkan riwayat tempat yang rutenya pernah Anda lihat</Text>
         </View>
 
         {/* List */}
-        {dummyHistory.map((item, index) => (
-          <TouchableOpacity key={item.id} style={styles.card}>
-            <View style={styles.cardLeft}>
-              <View style={styles.iconWrap}>
-                <Ionicons name={iconMap[item.type] as any} size={22} color={BLUE} />
+        {historyList.map((item, index) => {
+          const place = item.places;
+          const categoryName = place?.categories?.name || "Lainnya";
+          const iconName = iconMap[categoryName] || "location-outline";
+
+          return (
+            <TouchableOpacity 
+              key={item.id} 
+              style={styles.card}
+              onPress={() => {
+                if (place) {
+                   router.push({
+                     pathname: "/detail_tempat",
+                     params: { id: place.id }
+                   });
+                }
+              }}
+            >
+              <View style={styles.cardLeft}>
+                <View style={styles.iconWrap}>
+                  <Ionicons name={iconName as any} size={22} color={BLUE} />
+                </View>
+                {index < historyList.length - 1 && <View style={styles.connector} />}
               </View>
-              {index < dummyHistory.length - 1 && <View style={styles.connector} />}
-            </View>
-            <View style={styles.cardContent}>
-              <View style={styles.cardTop}>
-                <Text style={styles.cardName}>{item.name}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: item.status === "Buka" ? "#D1FAE5" : "#FEE2E2" }]}>
-                  <Text style={[styles.statusText, { color: item.status === "Buka" ? "#065F46" : "#991B1B" }]}>{item.status}</Text>
+              <View style={styles.cardContent}>
+                <View style={styles.cardTop}>
+                  <Text style={styles.cardName}>{place?.name || "Tempat tidak diketahui"}</Text>
+                </View>
+                <Text style={styles.cardType}>{categoryName}</Text>
+                <View style={styles.cardMeta}>
+                  <Ionicons name="time-outline" size={13} color="#9CA3AF" />
+                  <Text style={styles.cardDate}>{formatDate(item.created_at)}</Text>
                 </View>
               </View>
-              <Text style={styles.cardType}>{item.type}</Text>
-              <View style={styles.cardMeta}>
-                <Ionicons name="time-outline" size={13} color="#9CA3AF" />
-                <Text style={styles.cardDate}>{item.date}</Text>
-                <Ionicons name="location-outline" size={13} color="#9CA3AF" />
-                <Text style={styles.cardDistance}>{item.distance}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          );
+        })}
+
+        {historyList.length === 0 && (
+          <View style={{ alignItems: "center", marginTop: 40 }}>
+            <Ionicons name="time-outline" size={48} color="#CBD5E1" />
+            <Text style={{ marginTop: 12, color: "#64748B", fontSize: 14 }}>Belum ada riwayat rute.</Text>
+          </View>
+        )}
 
         {/* Empty space */}
         <View style={{ height: 20 }} />
@@ -108,11 +164,6 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F1F5F9" },
-
-  // Header
-  header: { backgroundColor: "#0F172A", flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 56, paddingBottom: 20 },
-  backBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: "rgba(255,255,255,0.1)", justifyContent: "center", alignItems: "center" },
-  headerTitle: { fontSize: 18, fontWeight: "700", color: "#fff" },
 
   scrollContent: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 40 },
 
@@ -131,7 +182,4 @@ const styles = StyleSheet.create({
   cardType: { fontSize: 12, color: "#9CA3AF", marginBottom: 8 },
   cardMeta: { flexDirection: "row", alignItems: "center", gap: 4 },
   cardDate: { fontSize: 12, color: "#9CA3AF", marginRight: 8 },
-  cardDistance: { fontSize: 12, color: "#9CA3AF" },
-  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  statusText: { fontSize: 11, fontWeight: "700" },
 });

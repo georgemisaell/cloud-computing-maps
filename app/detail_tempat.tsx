@@ -8,7 +8,6 @@ import {
   Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -16,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 let Svg: any, Path: any, Circle: any, Rect: any, Line: any;
 try {
@@ -562,6 +561,24 @@ export default function VenueDetailScreen() {
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
     setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH));
 
+  const handleLihatRute = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("user_route_history").insert({
+          user_id: user.id,
+          place_id: venueId,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to log history:", err);
+    }
+    router.push({
+      pathname: "/route_navigation",
+      params: { venue: JSON.stringify(venueParam) },
+    });
+  };
+
   if (loading) {
     return (
       <View
@@ -686,8 +703,10 @@ export default function VenueDetailScreen() {
 
           <Text style={styles.priceLabel}>Harga sewa</Text>
           <Text style={styles.priceValue}>
-            {formatRupiah(venue.priceMin)} – {formatRupiah(venue.priceMax)}
-            <Text style={styles.priceUnit}> /jam</Text>
+            {venue.priceMin != null && venue.priceMax != null 
+              ? `${formatRupiah(venue.priceMin)} – ${formatRupiah(venue.priceMax)}`
+              : "Free"}
+            {venue.priceMin != null && venue.priceMax != null && <Text style={styles.priceUnit}> /jam</Text>}
           </Text>
 
           <View style={styles.divider} />
@@ -752,12 +771,7 @@ export default function VenueDetailScreen() {
 
         <TouchableOpacity
           style={styles.routeButton}
-          onPress={() =>
-            router.push({
-              pathname: "/route_navigation",
-              params: { venue: JSON.stringify(venueParam) },
-            })
-          }
+          onPress={handleLihatRute}
         >
           <IconRoute size={18} />
           <Text style={styles.routeButtonText}>Lihat rute</Text>

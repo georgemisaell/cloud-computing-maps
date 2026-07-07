@@ -191,7 +191,7 @@ export default function EditProfileScreen() {
         <View style={styles.avatarSection}>
           <View style={styles.avatarWrap}>
             <Image
-              source={{ uri: avatarUrl || `https://ui-avatars.com/api/?name=${name || "User"}&background=random` }}
+              source={{ uri: avatarUrl || `https://api.dicebear.com/9.x/micah/png?seed=${encodeURIComponent(name || "User")}&backgroundColor=E2E8F0` }}
               style={styles.avatar}
             />
             <TouchableOpacity style={styles.cameraBtn} onPress={pickImage} disabled={uploading}>

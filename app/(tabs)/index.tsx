@@ -11,7 +11,6 @@ import {
   Keyboard,
   Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -20,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Venue {
   id: string;
@@ -142,10 +142,9 @@ export default function Index() {
           price_max,
           avg_rating,
           categories(name),
-          place_images(image_url),
+          place_images(image_url, is_primary),
           operating_hours(day_of_week, open_time, close_time, is_closed)
-        `)
-        .eq("place_images.is_primary", true);
+        `);
 
       if (error) throw error;
 
@@ -169,9 +168,15 @@ export default function Index() {
             id: item.id,
             name: item.name,
             category: item.categories?.name || "Uncategorized",
-            image: { uri: item.place_images?.[0]?.image_url || "https://via.placeholder.com/500" },
-            price: `Rp ${item.price_min / 1000}K–${item.price_max / 1000}K/jam`,
-            price_raw: item.price_min,
+            image: { 
+              uri: item.place_images?.find((img: any) => img.is_primary)?.image_url 
+                || item.place_images?.[0]?.image_url 
+                || "https://via.placeholder.com/500" 
+            },
+            price: item.price_min != null && item.price_max != null 
+              ? `Rp ${item.price_min / 1000}K–${item.price_max / 1000}K/jam` 
+              : "Free",
+            price_raw: item.price_min || 0,
             rating: item.avg_rating || 0,
             distance: `${dist.toFixed(1)} km`,
             distance_raw: dist,
@@ -235,12 +240,13 @@ export default function Index() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headline}>
-            Temukan tempat olahraga {"\n"} favoritmu
+            Find Your{"\n"}
+            <Text style={{ color: BLUE }}>Sports</Text> Location
           </Text>
           <View style={styles.avatarWrapper}>
             <TouchableOpacity onPress={() => router.push("/profile")}>
               <Image
-                source={{ uri: profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.name || "User"}&background=random` }}
+                source={{ uri: profile?.avatar_url || `https://api.dicebear.com/9.x/micah/png?seed=${encodeURIComponent(profile?.name || "User")}&backgroundColor=E2E8F0` }}
                 style={styles.avatarCircle}
               />
             </TouchableOpacity>
@@ -524,7 +530,7 @@ const styles = StyleSheet.create({
 
   // Header
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "stretch", paddingTop: 16, marginBottom: 16, gap: 12 },
-  headline: { flex: 1, fontSize: 20, fontWeight: "800", color: "#111827", lineHeight: 30 },
+  headline: { flex: 1, fontSize: 24, fontWeight: "800", color: "#111827", lineHeight: 32 },
   avatarWrapper: { justifyContent: "center", alignItems: "center" },
   avatarCircle: { width: 56, height: 56, borderRadius: 28, backgroundColor: BLUE },
 

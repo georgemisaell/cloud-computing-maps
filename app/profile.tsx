@@ -13,6 +13,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ name: string; email: string; avatar_url: string | null } | null>(null);
   const [favCount, setFavCount] = useState(0);
+  const [historyCount, setHistoryCount] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -41,6 +42,15 @@ export default function ProfileScreen() {
 
         if (!countError && count !== null) {
           setFavCount(count);
+        }
+
+        const { count: hCount, error: hError } = await supabase
+          .from("user_route_history")
+          .select('*', { count: 'exact', head: true })
+          .eq("user_id", user.id);
+
+        if (!hError && hCount !== null) {
+          setHistoryCount(hCount);
         }
 
         setProfile({
@@ -113,7 +123,7 @@ export default function ProfileScreen() {
           <View style={styles.avatarSection}>
             <View style={styles.avatarRing}>
               <Image 
-                source={{ uri: profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.name}&background=random` }} 
+                source={{ uri: profile?.avatar_url || `https://api.dicebear.com/9.x/micah/png?seed=${encodeURIComponent(profile?.name || "User")}&backgroundColor=E2E8F0` }} 
                 style={styles.avatar} 
               />
             </View>
@@ -143,7 +153,7 @@ export default function ProfileScreen() {
             <View style={[styles.statIcon, { backgroundColor: "#D1FAE5" }]}>
               <Ionicons name="location" size={22} color="#10B981" />
             </View>
-            <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{historyCount}</Text>
             <Text style={[styles.statLabel, { color: theme.subText }]}>Dikunjungi</Text>
           </View>
 
