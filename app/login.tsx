@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -35,7 +36,7 @@ export default function Login() {
 
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           data: {
@@ -52,7 +53,7 @@ export default function Login() {
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -71,7 +72,10 @@ export default function Login() {
       style={styles.container}
     >
       <View style={styles.formCard}>
-        <Text style={styles.title}>{isSignUp ? "Daftar Akun" : "Login ke CC-Maps"}</Text>
+        <TouchableOpacity style={styles.closeButton} onPress={() => router.back()}>
+          <Ionicons name="close" size={24} color="#6B7280" />
+        </TouchableOpacity>
+        <Text style={styles.title}>{isSignUp ? "Daftar Akun" : "Login ke SPORT FINDER"}</Text>
         <Text style={styles.subtitle}>
           {isSignUp ? "Lengkapi data untuk mendaftar" : "Silakan masuk untuk melanjutkan"}
         </Text>
@@ -152,6 +156,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 16,
     elevation: 8,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    zIndex: 10,
+    padding: 8,
   },
   title: {
     color: "#1A1A2E",

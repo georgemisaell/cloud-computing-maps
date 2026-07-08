@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View, Alert, ActivityIndicator } from "react-native";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { supabase } from "@/lib/supabase";
+import LoginPrompt from "@/components/LoginPrompt";
 
 const BLUE = "#0EA5E9";
 const DARK = "#0F172A";
@@ -11,10 +12,14 @@ export default function ProfileScreen() {
   const [isDark, setIsDark] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ name: string; email: string; avatar_url: string | null } | null>(null);
+  const [favCount, setFavCount] = useState(0);
+  const [historyCount, setHistoryCount] = useState(0);
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, [])
+  );
 
   async function fetchProfile() {
     try {
@@ -29,6 +34,24 @@ export default function ProfileScreen() {
           .single();
 
         if (error) throw error;
+
+        const { count, error: countError } = await supabase
+          .from("favorites")
+          .select('*', { count: 'exact', head: true })
+          .eq("user_id", user.id);
+
+        if (!countError && count !== null) {
+          setFavCount(count);
+        }
+
+        const { count: hCount, error: hError } = await supabase
+          .from("user_route_history")
+          .select('*', { count: 'exact', head: true })
+          .eq("user_id", user.id);
+
+        if (!hError && hCount !== null) {
+          setHistoryCount(hCount);
+        }
 
         setProfile({
           name: data?.name || "User",
@@ -82,6 +105,10 @@ export default function ProfileScreen() {
     );
   }
 
+  if (!profile) {
+    return <LoginPrompt message="Silakan login untuk melihat profil Anda." />;
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <StatusBar barStyle="light-content" backgroundColor={DARK} />
@@ -96,7 +123,7 @@ export default function ProfileScreen() {
           <View style={styles.avatarSection}>
             <View style={styles.avatarRing}>
               <Image 
-                source={{ uri: profile?.avatar_url || `https://ui-avatars.com/api/?name=${profile?.name}&background=random` }} 
+                source={{ uri: profile?.avatar_url || `https://api.dicebear.com/9.x/micah/png?seed=${encodeURIComponent(profile?.name || "User")}&backgroundColor=E2E8F0` }} 
                 style={styles.avatar} 
               />
             </View>
@@ -116,7 +143,7 @@ export default function ProfileScreen() {
             <View style={[styles.statIcon, { backgroundColor: "#FEE2E2" }]}>
               <Ionicons name="heart" size={22} color="#EF4444" />
             </View>
-            <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{favCount}</Text>
             <Text style={[styles.statLabel, { color: theme.subText }]}>Favorit</Text>
           </View>
 
@@ -126,7 +153,7 @@ export default function ProfileScreen() {
             <View style={[styles.statIcon, { backgroundColor: "#D1FAE5" }]}>
               <Ionicons name="location" size={22} color="#10B981" />
             </View>
-            <Text style={[styles.statNumber, { color: theme.text }]}>0</Text>
+            <Text style={[styles.statNumber, { color: theme.text }]}>{historyCount}</Text>
             <Text style={[styles.statLabel, { color: theme.subText }]}>Dikunjungi</Text>
           </View>
 

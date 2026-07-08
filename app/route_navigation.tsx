@@ -1,10 +1,12 @@
+import React, { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Dimensions,
   Linking,
+  PanResponder,
   StatusBar,
   StyleSheet,
   Text,
@@ -15,7 +17,6 @@ import MapView, { Marker, Polyline, PROVIDER_DEFAULT } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { width, height } = Dimensions.get("window");
-const MAP_HEIGHT = height * 0.62;
 
 export default function RouteNavigationScreen() {
   const params = useLocalSearchParams();
@@ -25,9 +26,44 @@ export default function RouteNavigationScreen() {
 
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [routeCoords, setRouteCoords] = useState<{latitude: number, longitude: number}[]>([]);
 
   const destLat = venue.lat ?? venue.latitude ?? -7.2575;
   const destLng = venue.lng ?? venue.longitude ?? 112.7521;
+
+  const panY = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dy) > 10;
+      },
+      onPanResponderMove: (e, gestureState) => {
+        let newY = gestureState.dy;
+        if (newY < -100) newY = -100;
+        if (newY > 200) newY = 200;
+        panY.setValue(newY);
+      },
+      onPanResponderRelease: (e, gestureState) => {
+        if (gestureState.dy > 50) {
+          Animated.spring(panY, {
+            toValue: 150,
+            useNativeDriver: true,
+          }).start();
+        } else if (gestureState.dy < -50) {
+          Animated.spring(panY, {
+            toValue: -100,
+            useNativeDriver: true,
+          }).start();
+        } else {
+          Animated.spring(panY, {
+            toValue: 0,
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     (async () => {
@@ -43,19 +79,42 @@ export default function RouteNavigationScreen() {
   }, []);
 
   useEffect(() => {
-    if (location && destLat && destLng && mapRef.current) {
+    if (location && destLat && destLng) {
+      const getRoute = async () => {
+        const startLat = location.coords.latitude;
+        const startLng = location.coords.longitude;
+        try {
+          const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${destLng},${destLat}?overview=full&geometries=geojson`);
+          const data = await response.json();
+          if (data.routes && data.routes.length > 0) {
+            const coords = data.routes[0].geometry.coordinates.map((coord: any) => ({
+              latitude: coord[1],
+              longitude: coord[0],
+            }));
+            setRouteCoords(coords);
+          } else {
+             setRouteCoords([{ latitude: startLat, longitude: startLng }, { latitude: destLat, longitude: destLng }]);
+          }
+        } catch (error) {
+          console.error("Error fetching route:", error);
+          setRouteCoords([{ latitude: startLat, longitude: startLng }, { latitude: destLat, longitude: destLng }]);
+        }
+      };
+      getRoute();
+    }
+  }, [location, destLat, destLng]);
+
+  useEffect(() => {
+    if (routeCoords.length > 0 && mapRef.current) {
       mapRef.current.fitToCoordinates(
-        [
-          { latitude: location.coords.latitude, longitude: location.coords.longitude },
-          { latitude: destLat, longitude: destLng },
-        ],
+        routeCoords,
         {
           edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
           animated: true,
         }
       );
     }
-  }, [location, destLat, destLng]);
+  }, [routeCoords]);
 
   const handleOpenMaps = () => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${destLat},${destLng}&travelmode=driving`;
@@ -78,7 +137,7 @@ export default function RouteNavigationScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#EEF4EE" translucent={false} />
 
       {/* Map Area */}
-      <View style={[styles.mapContainer, { height: MAP_HEIGHT }]}>
+      <View style={styles.mapContainer}>
         <MapView
           ref={mapRef}
           style={StyleSheet.absoluteFillObject}
@@ -92,24 +151,17 @@ export default function RouteNavigationScreen() {
             longitudeDelta: 0.05,
           }}
         >
-          {location && (
+          {routeCoords.length > 0 && (
             <Polyline
-              coordinates={[
-                { latitude: location.coords.latitude, longitude: location.coords.longitude },
-                { latitude: destLat, longitude: destLng },
-              ]}
+              coordinates={routeCoords}
               strokeColor="#2196F3"
-              strokeWidth={4}
-              lineDashPattern={[1]}
+              strokeWidth={5}
             />
           )}
 
           <Marker coordinate={{ latitude: destLat, longitude: destLng }}>
             <View style={styles.destWrapper}>
-              <View style={styles.destPin}>
-                <Ionicons name="location" size={20} color="#fff" />
-              </View>
-              <View style={styles.destTail} />
+              <Ionicons name="pin" size={48} color="#EF4444" style={styles.markerShadow} />
             </View>
           </Marker>
         </MapView>
@@ -121,8 +173,15 @@ export default function RouteNavigationScreen() {
       </View>
 
       {/* Bottom Sheet */}
-      <View style={styles.bottomSheet}>
-        <View style={styles.handle} />
+      <Animated.View 
+        style={[
+          styles.bottomSheet, 
+          { paddingBottom: Math.max(insets.bottom + 12, 24), transform: [{ translateY: panY }] }
+        ]}
+      >
+        <View style={styles.handleContainer} {...panResponder.panHandlers}>
+          <View style={styles.handle} />
+        </View>
 
         <View style={styles.etaRow}>
           <View>
@@ -142,7 +201,7 @@ export default function RouteNavigationScreen() {
         </TouchableOpacity>
 
         <Text style={styles.hint}>Akan membuka aplikasi peta eksternal</Text>
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -152,10 +211,8 @@ const styles = StyleSheet.create({
 
   // Map
   mapContainer: {
-    width: "100%",
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "#EEF4EE",
-    position: "relative",
-    overflow: "hidden",
   },
 
 
@@ -165,19 +222,12 @@ const styles = StyleSheet.create({
   destWrapper: {
     alignItems: "center",
   },
-  destPin: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: "#F59E0B",
-    alignItems: "center", justifyContent: "center",
-    shadowColor: "#000", shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2, shadowRadius: 4, elevation: 4,
-  },
-  destTail: {
-    width: 0, height: 0,
-    borderLeftWidth: 8, borderRightWidth: 8, borderTopWidth: 12,
-    borderLeftColor: "transparent", borderRightColor: "transparent",
-    borderTopColor: "#F59E0B",
-    marginTop: -1,
+  markerShadow: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   destLabel: {
     backgroundColor: "#FFFFFF",
@@ -202,7 +252,8 @@ const styles = StyleSheet.create({
 
   // Bottom Sheet
   bottomSheet: {
-    flex: 1,
+    position: "absolute",
+    bottom: 0, left: 0, right: 0,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
     paddingHorizontal: 24,
@@ -210,12 +261,15 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     shadowColor: "#000", shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.06, shadowRadius: 10, elevation: 8,
-    justifyContent: "space-between",
+  },
+  handleContainer: {
+    width: "100%",
+    paddingVertical: 10,
+    alignItems: "center",
   },
   handle: {
     width: 40, height: 4, borderRadius: 2,
     backgroundColor: "#E5E7EB",
-    alignSelf: "center", marginBottom: 16,
   },
   etaRow: {
     flexDirection: "row", justifyContent: "space-between",

@@ -2,11 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, Image, ScrollView,
-  StatusBar, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  StatusBar, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Linking
 } from "react-native";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { supabase } from "@/lib/supabase";
+import { decode } from "base64-arraybuffer";
 
 const BLUE = "#0EA5E9";
 const DARK = "#0F172A";
@@ -56,7 +57,14 @@ export default function EditProfileScreen() {
   async function pickImage() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert("Izin dibutuhkan", "Aplikasi butuh akses galeri untuk mengganti foto profil.");
+      Alert.alert(
+        "Izin dibutuhkan", 
+        "Aplikasi butuh akses galeri untuk mengganti foto profil. Izinkan melalui Pengaturan HP Anda.",
+        [
+          { text: "Batal", style: "cancel" },
+          { text: "Buka Pengaturan", onPress: () => Linking.openSettings() }
+        ]
+      );
       return;
     }
 
@@ -65,29 +73,31 @@ export default function EditProfileScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
+      base64: true,
     });
 
     if (!result.canceled && result.assets[0]) {
-      await uploadAvatar(result.assets[0].uri);
+      const asset = result.assets[0];
+      if (asset.base64) {
+        await uploadAvatar(asset.uri, asset.base64);
+      } else {
+        Alert.alert("Error", "Gagal membaca file gambar.");
+      }
     }
   }
 
-  async function uploadAvatar(uri: string) {
+  async function uploadAvatar(uri: string, base64Str: string) {
     if (!userId) return;
     try {
       setUploading(true);
 
-      const response = await fetch(uri);
-      const blob = await response.blob();
       const fileExt = uri.split(".").pop() || "jpg";
       const fileName = `${userId}/avatar_${Date.now()}.${fileExt}`;
 
-      const arrayBuffer = await new Response(blob).arrayBuffer();
-
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, arrayBuffer, {
-          contentType: blob.type || "image/jpeg",
+        .upload(fileName, decode(base64Str), {
+          contentType: "image/jpeg",
           upsert: true,
         });
 
@@ -95,6 +105,17 @@ export default function EditProfileScreen() {
 
       const { data } = supabase.storage.from("avatars").getPublicUrl(fileName);
       setAvatarUrl(data.publicUrl);
+
+      // Auto-simpan URL avatar langsung ke tabel profiles agar tidak hilang saat back
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: data.publicUrl })
+        .eq("id", userId);
+      
+      if (profileError) {
+        console.error("Gagal auto-save avatar_url:", profileError);
+      }
+
     } catch (error: any) {
       Alert.alert("Error", "Gagal upload foto: " + error.message);
     } finally {
@@ -156,12 +177,21 @@ export default function EditProfileScreen() {
     >
       <StatusBar barStyle="light-content" backgroundColor={DARK} />
 
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={20} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profil</Text>
+        <View style={{ width: 38 }} />
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Avatar */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarWrap}>
             <Image
-              source={{ uri: avatarUrl || `https://ui-avatars.com/api/?name=${name || "User"}&background=random` }}
+              source={{ uri: avatarUrl || `https://api.dicebear.com/9.x/micah/png?seed=${encodeURIComponent(name || "User")}&backgroundColor=E2E8F0` }}
               style={styles.avatar}
             />
             <TouchableOpacity style={styles.cameraBtn} onPress={pickImage} disabled={uploading}>
