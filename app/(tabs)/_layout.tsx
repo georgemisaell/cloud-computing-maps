@@ -53,6 +53,16 @@ export default function RootLayout() {
         }}
       />
 
+      <Tabs.Screen
+        name="main_bareng"
+        options={{
+          title: "Main Bareng",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "people-sharp" : "people-outline"} color={color} size={24} />
+          ),
+        }}
+      />
+
       {/* Tidak muncul di tab tapi dapat bottom nav otomatis */}
       <Tabs.Screen
         name="location_permission"

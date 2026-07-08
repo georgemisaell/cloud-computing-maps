@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(npm install *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(npx expo *)",
+      "Read(//Users/alim/.nvm/versions/node/**)",
+      "Bash(command -v nvm)",
+      "Bash(curl -s \"http://localhost:8081/status\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true\")",
+      "Bash(sed 's#\\\\\\(https://[a-z0-9]*\\\\\\).*#\\\\1...#')",
+      "Bash(awk -F= '/EXPO_PUBLIC_SUPABASE/{print $1\"=\"\\(length\\($2\\)>0?\"SET\\(\"length\\($2\\)\" chars\\)\":\"EMPTY\"\\)}' .env)",
+      "Bash(pkill -f \"expo start\")",
+      "Bash(curl *)"
+    ]
+  }
+}

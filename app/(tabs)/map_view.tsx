@@ -141,7 +141,9 @@ export default function MapViewScreen() {
           distance: distText,
           status: venueStatus,
           category: Array.isArray(v.category) ? v.category[0] : v.category,
-          image: v.place_images?.[0]?.image_url || null
+          image: v.place_images?.find((img: any) => img.is_primary)?.image_url 
+            || v.place_images?.[0]?.image_url 
+            || "https://via.placeholder.com/500"
         };
       });
 
@@ -193,7 +195,9 @@ export default function MapViewScreen() {
                       initial: venue.name.charAt(0),
                       color: color,
                       distance: venue.distance, 
-                      price: `Rp ${venue.price_min/1000}K–${venue.price_max/1000}K/jam`,
+                      price: venue.price_min != null && venue.price_max != null
+                        ? `Rp ${venue.price_min / 1000}K–${venue.price_max / 1000}K/jam`
+                        : "Free",
                       status: venue.status,
                       sport: venue.category?.name || "Sport",
                       image: venue.image

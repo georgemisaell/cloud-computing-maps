@@ -3,11 +3,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 let Svg: any, Path: any, Circle: any, Rect: any, Line: any;
 try {
@@ -492,14 +492,92 @@ export default function VenueDetailScreen() {
     }
   }, [venueId]);
 
+  const checkFavoriteStatus = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("place_id", venueId)
+        .single();
+      
+      if (data) setIsFavorited(true);
+    } catch (err) {
+      // Ignore error if no rows found
+    }
+  }, [venueId]);
+
   useEffect(() => {
     if (venueId) {
       fetchVenueDetail();
+      checkFavoriteStatus();
     }
-  }, [venueId, fetchVenueDetail]);
+  }, [venueId, fetchVenueDetail, checkFavoriteStatus]);
+
+  const toggleFavorite = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      Alert.alert("Login Diperlukan", "Silakan login terlebih dahulu untuk menambahkan tempat ini ke favorit.");
+      return;
+    }
+
+    try {
+      if (isFavorited) {
+        setIsFavorited(false);
+        const { error } = await supabase
+          .from("favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("place_id", venueId);
+        
+        if (error) {
+          console.error("Delete favorite error:", error);
+          Alert.alert("Error", "Gagal menghapus dari favorit: " + error.message);
+          setIsFavorited(true); // rollback
+        }
+      } else {
+        setIsFavorited(true);
+        const { error } = await supabase
+          .from("favorites")
+          .insert({ user_id: user.id, place_id: venueId });
+        
+        if (error) {
+          console.error("Insert favorite error:", error);
+          Alert.alert("Error", "Gagal menambahkan ke favorit: " + error.message);
+          setIsFavorited(false); // rollback
+        }
+      }
+    } catch (err: any) {
+      console.error("Failed to toggle favorite:", err);
+      Alert.alert("Error", "Terjadi kesalahan sistem: " + err.message);
+      // rollback UI state on error
+      setIsFavorited(!isFavorited);
+    }
+  };
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
     setActiveIndex(Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH));
+
+  const handleLihatRute = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("user_route_history").insert({
+          user_id: user.id,
+          place_id: venueId,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to log history:", err);
+    }
+    router.push({
+      pathname: "/route_navigation",
+      params: { venue: JSON.stringify(venueParam) },
+    });
+  };
 
   if (loading) {
     return (
@@ -571,7 +649,7 @@ export default function VenueDetailScreen() {
 
           <TouchableOpacity
             style={styles.overlayBtnRight}
-            onPress={() => setIsFavorited((v) => !v)}
+            onPress={toggleFavorite}
           >
             <IconHeart size={20} filled={isFavorited} />
           </TouchableOpacity>
@@ -625,8 +703,10 @@ export default function VenueDetailScreen() {
 
           <Text style={styles.priceLabel}>Harga sewa</Text>
           <Text style={styles.priceValue}>
-            {formatRupiah(venue.priceMin)} – {formatRupiah(venue.priceMax)}
-            <Text style={styles.priceUnit}> /jam</Text>
+            {venue.priceMin != null && venue.priceMax != null 
+              ? `${formatRupiah(venue.priceMin)} – ${formatRupiah(venue.priceMax)}`
+              : "Free"}
+            {venue.priceMin != null && venue.priceMax != null && <Text style={styles.priceUnit}> /jam</Text>}
           </Text>
 
           <View style={styles.divider} />
@@ -666,7 +746,7 @@ export default function VenueDetailScreen() {
       <View style={styles.stickyBar}>
         <TouchableOpacity
           style={[styles.heartButton, isFavorited && styles.heartButtonActive]}
-          onPress={() => setIsFavorited((v) => !v)}
+          onPress={toggleFavorite}
         >
           {Svg ? (
             <Svg
@@ -691,12 +771,7 @@ export default function VenueDetailScreen() {
 
         <TouchableOpacity
           style={styles.routeButton}
-          onPress={() =>
-            router.push({
-              pathname: "/route_navigation",
-              params: { venue: JSON.stringify(venueParam) },
-            })
-          }
+          onPress={handleLihatRute}
         >
           <IconRoute size={18} />
           <Text style={styles.routeButtonText}>Lihat rute</Text>

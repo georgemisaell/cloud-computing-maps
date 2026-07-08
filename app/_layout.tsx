@@ -1,8 +1,8 @@
-import { Stack, useRouter, useSegments } from "expo-router";
-import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js";
-import { View, ActivityIndicator } from "react-native";
+import { Stack, useRouter, useSegments } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -32,10 +32,7 @@ export default function RootLayout() {
 
     const inAuthGroup = segments[0] === "login";
 
-    if (!session && !inAuthGroup) {
-      // Redirect to login if not authenticated
-      router.replace("/login");
-    } else if (session && inAuthGroup) {
+    if (session && inAuthGroup) {
       // Redirect to home if already authenticated
       router.replace("/");
     }
@@ -50,12 +47,17 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="login" options={{ headerShown: false }} />
+    <Stack initialRouteName="(tabs)">
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="detail_tempat" options={{ title: "Detail Tempat" }} />
       <Stack.Screen name="map_view" options={{ headerShown: false }} />
       <Stack.Screen name="venue_preview" options={{ headerShown: false }} />
+      <Stack.Screen name="buat_ajakan" options={{ headerShown: false }} />
+      <Stack.Screen name="detail_ajakan" options={{ headerShown: false }} />
+      <Stack.Screen name="edit_profile" options={{ headerShown: false }} />
+      <Stack.Screen name="profile" options={{ title: "Profile" }} />
+      <Stack.Screen name="route_navigation" options={{ title: "Route Navigation" }} />
     </Stack>
   );
 }
