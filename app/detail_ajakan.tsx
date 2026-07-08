@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const BLUE = "#2563EB";
 
@@ -162,6 +163,7 @@ export default function DetailAjakanScreen() {
   const isFull = sisa <= 0;
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -266,10 +268,12 @@ export default function DetailAjakanScreen() {
         ) : null}
       </View>
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, backgroundColor: "#fff" },
 
   header: {

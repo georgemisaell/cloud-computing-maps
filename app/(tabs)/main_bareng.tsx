@@ -4,10 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { ActivityIndicator, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const BLUE = "#2563EB";
 
-const categories = ["Semua", "Badminton", "Futsal", "Padel", "Basket", "Renang"];
+const categories = ["Semua", "Badminton", "Futsal", "Padel", "Basket"];
 
 export const dummyAjakan: any[] = []; // Temporary export for detail_ajakan.tsx
 
@@ -106,6 +107,7 @@ export default function MainBarengScreen() {
   }
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -232,11 +234,13 @@ export default function MainBarengScreen() {
         }
       />
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB", paddingTop: 12 },
+  safeArea: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1, backgroundColor: "#F9FAFB" },
 
   header: {
     flexDirection: "row",
