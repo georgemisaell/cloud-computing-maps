@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const BLUE = "#2563EB";
 
@@ -25,6 +26,7 @@ export default function BuatAjakanScreen() {
   };
 
   return (
+    <SafeAreaView style={styles.safeArea} edges={["top"]}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -62,19 +64,16 @@ export default function BuatAjakanScreen() {
         </View>
 
         {/* Tanggal & Jam */}
-        <View style={styles.rowHalf}>
-          <View style={styles.half}>
-            <Text style={styles.label}>TANGGAL</Text>
-            <TouchableOpacity style={styles.inputBox}>
-              <Text style={styles.inputText}>📅 {date}</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.half}>
-            <Text style={styles.label}>JAM</Text>
-            <TouchableOpacity style={styles.inputBox}>
-              <Text style={styles.inputText}>⏰ {time}</Text>
-            </TouchableOpacity>
-          </View>
+        <Text style={styles.label}>TANGGAL & JAM</Text>
+        <View style={styles.dateTimeRow}>
+          <TouchableOpacity style={styles.dateTimeBox}>
+            <Ionicons name="calendar-outline" size={18} color={BLUE} />
+            <Text style={styles.dateTimeText}>{date}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.dateTimeBox}>
+            <Ionicons name="time-outline" size={18} color={BLUE} />
+            <Text style={styles.dateTimeText}>{time}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Kuota orang */}
@@ -122,10 +121,12 @@ export default function BuatAjakanScreen() {
         </TouchableOpacity>
       </View>
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: "#fff" },
   container: { flex: 1, backgroundColor: "#fff" },
 
   header: {
@@ -173,15 +174,18 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 14, color: "#374151", fontWeight: "600" },
   chipTextActive: { color: BLUE },
 
-  rowHalf: { flexDirection: "row", gap: 12 },
-  half: { flex: 1 },
-  inputBox: {
+  dateTimeRow: { flexDirection: "row", gap: 12 },
+  dateTimeBox: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     backgroundColor: "#F3F4F6",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 16,
   },
-  inputText: { fontSize: 15, color: "#374151", fontWeight: "500" },
+  dateTimeText: { fontSize: 15, color: "#374151", fontWeight: "600" },
 
   quotaBox: {
     flexDirection: "row",
